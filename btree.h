@@ -16,6 +16,7 @@ public:
         friend btree;
     public:
         unsigned DisplaySpaces = 8;
+        static int space;
 
         const T& operator()() { return *Data; }
         treenode(const T& Data, treenode* parent) : parent{ parent } {
@@ -32,8 +33,6 @@ public:
         }
 
         void DisplayLeftOrder(std::ostream& out) {
-            static int space = 0;
-
             if (left) {
                 space += DisplaySpaces;
                 left->DisplayLeftOrder(out);
@@ -52,8 +51,6 @@ public:
         }
 
         void DisplayRightOrder(std::ostream& out) {
-            static int space = 0;
-
             if (right) {
                 space += DisplaySpaces;
                 right->DisplayRightOrder(out);
@@ -116,6 +113,7 @@ public:
     }
     void Display(std::ostream& out, void (treenode::*func)(std::ostream&)) {
         std::cout << std::setw(5);
+        btree::treenode::space = 0;
         if (root) (root->*func)(out);
         std::cout << std::setw(0);
     }
@@ -138,7 +136,14 @@ public:
         return *this;
     }
 
-    const btree& MoveTree(const btree& other) {
+    const btree& MoveTree( btree& other) {
+        MoveBranchCopyless(other.root);
+        other.lsize = other.rsize = other.size = 0;
+        other.root = nullptr;
+        return *this;
+    }
+
+    const btree& MergeTree(btree* other) {
         return *this;
     }
 
@@ -154,10 +159,18 @@ public:
         return _Insert(node);
     }
 
+    bool remove(const T& SearchValue) {
+        return _remove(SearchValue);
+    }
+
+    bool remove(T SearchValue) {
+        return _remove(SearchValue);
+    }
+
 private:
     void clear() {
         if (!root) return;
-
+        btree::treenode::space = 0;
         root->clear();
         delete root;
         root = nullptr;
@@ -170,16 +183,20 @@ private:
         if (branch->left) CopyBranch(branch->left);
     }
 
-    void MoveBranch(treenode* branch) {
+    void MoveBranchCopyless(treenode* branch) {
         if (!branch) return;
-        insert(*branch->Data);
 
         if (branch->right) {
-            MoveBranch(branch->right);
-            branch->right->clear();
-            delete branch;
+            MoveBranchCopyless(branch->right);
+            branch->right = nullptr;
         }
 
+        if (branch->left) {
+            MoveBranchCopyless(branch->left);
+            branch->left = nullptr;
+        }
+
+        insert(branch);
     }
 
     bool _Insert(treenode* ToAttach) {
@@ -223,7 +240,43 @@ private:
         ++size;
         return true;
     }
+
+    bool _remove(T& ToSearch) {
+        btree::treenode* temp = root;
+
+        while (temp) {
+            if (ToSearch == *temp->Data) {
+                if (temp == root) {
+                    --rsize;
+                    --lsize;
+                    --size;
+                    root = nullptr;
+                }
+                else {
+                    if (temp->parent->left == temp) temp->parent->left = nullptr;
+                    else temp->parent->right = nullptr;
+                }
+
+                if (temp->right) insert(temp->right);
+                if (temp->left) insert(temp->left);
+
+                delete temp;
+
+                return true;
+            }
+            else if (ToSearch > *temp->Data) {
+                temp = temp->right;
+            }
+            else {
+                temp = temp->left;
+            }
+        }
+
+        return false;
+    }
 };
 
+template<typename T>
+int btree<T>::treenode::space = 0;
 
 #endif
