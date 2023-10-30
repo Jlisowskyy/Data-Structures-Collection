@@ -1,6 +1,8 @@
+// Author: Jakub Lisowski
+
 #include "btree.h"
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 
 int BtreeMain(){
     srand(time(nullptr));
@@ -19,55 +21,55 @@ int BtreeMain(){
             ++counter3;
         }
     }
-    
-    testerek->Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+
+    testerek->display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek->DisplaySize();
+    testerek->displaySize();
 
     std::cout << "\nState of counter: " << counter1;
     std::cout << "\n\n-----------------------------------------------------------------------------------------------------\n\n";
 
     testerek2 = *testerek;
-    testerek2.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek2.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek2.DisplaySize();
+    testerek2.displaySize();
 
     std::cout << "\n\n-----------------------------------------------------------------------------------------------------\n\n";
    
     delete testerek;
-    testerek2.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek2.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek2.DisplaySize();
+    testerek2.displaySize();
 
 
     std::cout << "\n\n-----------------------------------------------------------------------------------------------------\n\n";
 
     std::cout << "Before merging trees: \n";
 
-    testerek2.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek2.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek2.DisplaySize();
+    testerek2.displaySize();
 
-    testerek3.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek3.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek3.DisplaySize();
+    testerek3.displaySize();
 
     std::cout << "After merging trees: \n";
 
-    testerek2.MoveTree(testerek3);
+    testerek2.moveTree(testerek3);
 
 
-    testerek2.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek2.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek2.DisplaySize();
+    testerek2.displaySize();
 
-    testerek3.Display(std::cout, &btree<int>::treenode::DisplayLeftOrder);
+    testerek3.display(std::cout, &btree<int>::treeNode::displayLeftOrder);
     std::cout << std::endl;
-    testerek3.DisplaySize();
+    testerek3.displaySize();
 
 
     return 0;
 }
 
 template<typename T>
-int btree<T>::treenode::space = 0;
+int btree<T>::treeNode::space = 0;

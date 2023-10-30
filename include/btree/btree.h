@@ -1,3 +1,5 @@
+// Author: Jakub Lisowski
+
 #ifndef MY_OWN_BTREE_H
 #define MY_OWN_BTREE_H
 
@@ -5,77 +7,75 @@
 #include <iomanip>
 
 template<typename T>
-class btree{
+class btree {
 public:
-    class treenode {
+    class treeNode {
 
-        T* Data;
-        treenode* left = nullptr;
-        treenode* right = nullptr;
-        treenode* parent = nullptr;
+        T *data;
+        treeNode *left = nullptr;
+        treeNode *right = nullptr;
+        treeNode *parent = nullptr;
         friend btree;
     public:
-        unsigned DisplaySpaces = 8;
+        unsigned displaySpaces = 8;
         static int space;
 
-        const T& operator()() { return *Data; }
-        treenode(const T& Data, treenode* parent) : parent{ parent } {
-            this->Data = new T(Data);
-        }
-        treenode(T* Data, treenode& parent) : parent{ parent }, Data{ Data } {}
+        const T &operator()() { return *data; }
 
-        ~treenode() {
-            delete Data;
+        treeNode(const T &Data, treeNode *parent) : parent{parent} {
+            this->data = new T(Data);
         }
 
-        friend std::ostream& operator<<(std::ostream& out, treenode& Input) {
-            return out << Input.Data;
+        treeNode(T *Data, treeNode &parent) : parent{parent}, data{Data} {}
+
+        ~treeNode() {
+            delete data;
         }
 
-        void DisplayLeftOrder(std::ostream& out) {
+        friend std::ostream &operator<<(std::ostream &out, treeNode &Input) {
+            return out << Input.data;
+        }
+
+        void displayLeftOrder(std::ostream &out) {
             if (left) {
-                space += DisplaySpaces;
-                left->DisplayLeftOrder(out);
-            }
-            else StructurizedDisplay(nullptr, space + DisplaySpaces);
+                space += displaySpaces;
+                left->displayLeftOrder(out);
+            } else structuredDisplay(nullptr, space + displaySpaces);
 
-            StructurizedDisplay(Data, space);
+            structuredDisplay(data, space);
 
             if (right) {
-                space += DisplaySpaces;
-                 right->DisplayLeftOrder(out);
-            }
-            else StructurizedDisplay(nullptr, space + DisplaySpaces);
+                space += displaySpaces;
+                right->displayLeftOrder(out);
+            } else structuredDisplay(nullptr, space + displaySpaces);
 
-            space -= DisplaySpaces;
+            space -= displaySpaces;
         }
 
-        void DisplayRightOrder(std::ostream& out) {
+        void displayRightOrder(std::ostream &out) {
             if (right) {
-                space += DisplaySpaces;
-                right->DisplayRightOrder(out);
-            }
-            else StructurizedDisplay(nullptr, space + DisplaySpaces);
+                space += displaySpaces;
+                right->displayRightOrder(out);
+            } else structuredDisplay(nullptr, space + displaySpaces);
 
-            StructurizedDisplay(Data, space);
+            structuredDisplay(data, space);
 
             if (left) {
-                space += DisplaySpaces;
-                right->DisplayRightOrder(out);
-            }
-            else StructurizedDisplay(nullptr, space + DisplaySpaces);
+                space += displaySpaces;
+                right->displayRightOrder(out);
+            } else structuredDisplay(nullptr, space + displaySpaces);
 
-            space -= DisplaySpaces;
+            space -= displaySpaces;
         }
 
     private:
 
-        void DisplayUnderlyingNodes(std::ostream& out) {
-            if (left) out << *left->Data << ' ';
-            if (right) out << *right->Data << ' ';
+        void displayUnderlyingNodes(std::ostream &out) {
+            if (left) out << *left->data << ' ';
+            if (right) out << *right->data << ' ';
         }
 
-        void StructurizedDisplay(T* input, unsigned dist) {
+        void structuredDisplay(T *input, unsigned dist) {
             for (unsigned i = 0; i < dist; ++i) std::cout << ' ';
 
             if (!input) std::cout << "_ ";
@@ -94,72 +94,80 @@ public:
     };
 
 private:
-    treenode *root = nullptr;
+    treeNode *root = nullptr;
     unsigned size = 0;
     unsigned lsize = 0;
     unsigned rsize = 0;
 
 public:
-    bool IsEmpty() { return !root; }
-    unsigned& Size() { return size; }
-    unsigned& Height() { return lsize > rsize ? lsize : rsize; }
-    
-    btree() {}
-    btree(const btree& other) {
+    bool isEmpty() { return !root; }
+
+    unsigned &Size() { return size; }
+
+    unsigned &Height() { return lsize > rsize ? lsize : rsize; }
+
+    btree() = default;
+
+    btree(const btree &other) {
         *this = other;
     }
+
     ~btree() {
         clear();
     }
-    void Display(std::ostream& out, void (treenode::*func)(std::ostream&)) {
+
+    void display(std::ostream &out, void (treeNode::*func)(std::ostream &)) {
         std::cout << std::setw(5);
-        btree::treenode::space = 0;
+        btree::treeNode::space = 0;
         if (root) (root->*func)(out);
         std::cout << std::setw(0);
     }
 
-    void DisplaySize() {
+    void displaySize() {
         std::cout << "Amount of nodes stored in tree: " << size << std::endl;
         std::cout << "Height of left branch: " << lsize << std::endl;
         std::cout << "Height of right branch: " << rsize << std::endl;
     }
 
-    const btree& operator=(const btree& other) {
+    btree &operator=(const btree &other) {
+        if (&other == this) return *this;
+
         clear();
-        CopyBranch(other.root);
+        copyBranch(other.root);
 
         return *this;
     }
 
-    const btree& InsertTree(const btree& other) {
-        CopyBranch(other.root);
+    const btree &insertTree(const btree &other) {
+        copyBranch(other.root);
         return *this;
     }
 
-    const btree& MoveTree( btree& other) {
-        MoveBranchCopyless(other.root);
+    const btree &moveTree(btree &other) {
+        moveBranchWoutCopy(other.root);
         other.lsize = other.rsize = other.size = 0;
         other.root = nullptr;
         return *this;
     }
 
-    const btree& MergeTree(btree* other) {
+    const btree &mergeTree(btree *other) {
         return *this;
     }
 
-    bool insert(const T& DataIn) {
+    bool insert(const T &DataIn) {
         // Ordered by value. Size is totally random 
-        return _Insert(new treenode(DataIn, nullptr));
+        return _insert(new treeNode(DataIn, nullptr));
     }
 
-    bool insert(const T* DataIn) {
-        return _Insert(new treenode(DataIn, nullptr)); }
-
-    bool insert(treenode* node) {
-        return _Insert(node);
+    bool insert(const T *DataIn) {
+        return _insert(new treeNode(DataIn, nullptr));
     }
 
-    bool remove(const T& SearchValue) {
+    bool insert(treeNode *node) {
+        return _insert(node);
+    }
+
+    bool remove(const T &SearchValue) {
         return _remove(SearchValue);
     }
 
@@ -170,39 +178,39 @@ public:
 private:
     void clear() {
         if (!root) return;
-        btree::treenode::space = 0;
+        btree::treeNode::space = 0;
         root->clear();
         delete root;
         root = nullptr;
     }
 
-    void CopyBranch(treenode* branch) {
+    void copyBranch(treeNode *branch) {
         if (!branch) return;
-        insert(*branch->Data);
-        if (branch->right) CopyBranch(branch->right);
-        if (branch->left) CopyBranch(branch->left);
+        insert(*branch->data);
+        if (branch->right) copyBranch(branch->right);
+        if (branch->left) copyBranch(branch->left);
     }
 
-    void MoveBranchCopyless(treenode* branch) {
+    void moveBranchWoutCopy(treeNode *branch) {
         if (!branch) return;
 
         if (branch->right) {
-            MoveBranchCopyless(branch->right);
+            moveBranchWoutCopy(branch->right);
             branch->right = nullptr;
         }
 
         if (branch->left) {
-            MoveBranchCopyless(branch->left);
+            moveBranchWoutCopy(branch->left);
             branch->left = nullptr;
         }
 
         insert(branch);
     }
 
-    bool _Insert(treenode* ToAttach) {
-        treenode* temp = root, * next = root;
-        T* DataIn = ToAttach->Data;
-        unsigned* Update;
+    bool _insert(treeNode *ToAttach) {
+        treeNode *temp = root, *next = root;
+        T *DataIn = ToAttach->data;
+        unsigned *Update;
 
         if (!root) {
             size = lsize = rsize = 1;
@@ -211,27 +219,25 @@ private:
             return true;
         }
 
-        if (*DataIn > *temp->Data) Update = &rsize;
-        else if (*DataIn == *temp->Data) return false;
+        if (*DataIn > *temp->data) Update = &rsize;
+        else if (*DataIn == *temp->data) return false;
         else Update = &lsize;
 
         do {
             temp = next;
 
-            if (*DataIn > *temp->Data) {
+            if (*DataIn > *temp->data) {
                 next = temp->right;
-            }
-            else if (*DataIn == *temp->Data) return false;
+            } else if (*DataIn == *temp->data) return false;
             else {
                 next = temp->left;
             }
         } while (next);
 
-        if (*DataIn > *temp->Data) {
+        if (*DataIn > *temp->data) {
             if (!temp->left) ++(*Update);
-            temp->right = ToAttach; 
-        }
-        else {
+            temp->right = ToAttach;
+        } else {
             if (!temp->right) ++(*Update);
             temp->left = ToAttach;
         }
@@ -241,18 +247,17 @@ private:
         return true;
     }
 
-    bool _remove(T& ToSearch) {
-        btree::treenode* temp = root;
+    bool _remove(T &ToSearch) {
+        btree::treeNode *temp = root;
 
         while (temp) {
-            if (ToSearch == *temp->Data) {
+            if (ToSearch == *temp->data) {
                 if (temp == root) {
                     --rsize;
                     --lsize;
                     --size;
                     root = nullptr;
-                }
-                else {
+                } else {
                     if (temp->parent->left == temp) temp->parent->left = nullptr;
                     else temp->parent->right = nullptr;
                 }
@@ -263,11 +268,9 @@ private:
                 delete temp;
 
                 return true;
-            }
-            else if (ToSearch > *temp->Data) {
+            } else if (ToSearch > *temp->data) {
                 temp = temp->right;
-            }
-            else {
+            } else {
                 temp = temp->left;
             }
         }

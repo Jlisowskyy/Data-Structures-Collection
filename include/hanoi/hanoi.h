@@ -7,15 +7,19 @@
 #define HANOI_HANOI_H
 
 #include "stack.h"
-#include "timer.h"
 
-class hanoi{
+
+// WARN: becomes unusable after game
+class hanoi
+{
 public:
+    // can be used to change data type used inside stacks
     using dtype = uint;
 
-    explicit hanoi(size_t towerLevels): _towerLevels{ towerLevels }{
-        for(auto& tower : _towers){
-            tower = new stack<dtype>(towerLevels);
+    explicit hanoi(size_t towerLevels): _towerLevels{ towerLevels }
+    {
+        for(auto & _tower : _towers){
+            _tower = new stack<dtype>(towerLevels);
         }
 
         for(dtype i = towerLevels; i > 0; --i)
@@ -23,11 +27,12 @@ public:
     }
 
     ~hanoi(){
-        for(auto& tower : _towers){
-            delete tower;
+        for(int i = 0; i < towersCount; ++i){
+            delete _towers[i];
         }
     }
 
+    // display simple towers imitation ; does not align foundation to integer length
     void displayTowers(){
         std::tuple<const dtype*, size_t> towerArrays[towersCount];
 
@@ -57,9 +62,10 @@ public:
         std::cout << "_____ _____ _____\n";
     }
 
+    // true - recursive solution
+    // false - non-recursive solution with go instruction
     template<bool showEveryMove = false>
     void playGame(bool isRecursive = true)
-        // rozwiazania z zajec
     {
         if constexpr (showEveryMove)
             displayTowers();
@@ -69,16 +75,17 @@ public:
     }
 
     template<bool showEveryMove = false>
-    void playGameMySol()
+    void playGamePerfNonRecuSol()
     {
         if constexpr (showEveryMove)
             displayTowers();
 
-        hanoiMyNonRecu<showEveryMove>();
+        hanoiPerfNonRecu<showEveryMove>();
     }
 
 private:
 
+    // the most popular recursive solution
     template<bool showEveryMove = false>
     void hanoiRecu(size_t elemsToMove, size_t srcTower, size_t tmpTower, size_t dstTower)
     {
@@ -95,6 +102,7 @@ private:
         hanoiRecu<showEveryMove>(elemsToMove - 1, tmpTower, srcTower, dstTower);
     }
 
+    // more creative non-recursive solution, actually slower than recursive one
     template<bool showEveryMove = false>
     void hanoiNonRecu()
     {
@@ -146,8 +154,9 @@ adrRet:     pop4();
             goto adrRet;
     }
 
+    // sightly upgraded hanoiNonRecu but still slower than recursive one
     template<bool showEveryMove = false>
-    void hanoiMyNonRecu()
+    void hanoiPerfNonRecu()
     {
         stack<size_t> argHolder(4 * _towerLevels);
         size_t elemsToMove = _towerLevels;

@@ -9,12 +9,19 @@
 #include <chrono>
 #include <iostream>
 
+// Class used to simplify performance measuring, with the simplest interface possible
+
 class timer{
 public:
     timer(): start{ std::chrono::steady_clock::now() } {}
     ~timer()
     {
         if (!wasWritten) Stop();
+    }
+
+    void Start()
+    {
+        start = std::chrono::steady_clock::now();
     }
 
     void Stop()

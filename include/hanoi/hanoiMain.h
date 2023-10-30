@@ -1,15 +1,19 @@
+// Author: Jakub Lisowski
 
-int HanoirMain() {
+#include "hanoi.h"
+#include "timer.h"
+
 // parameters
-const size_t towerLevels = 20;
-const bool displayTowers = false;
+const size_t towerLevels = 10;
+const bool displayTowers = true;
 
 // configs
-const bool timeRecu = false; // standardowe rozwiazanie rekurencyjne
-const bool timeNonRecu = false; // rozwiazanie nie rekurencyjne z zajec
-const bool timerMyNonRecu = false; // poprawione rozwiazanie nie rekurencyjne
-const bool timeAll = true;
+const bool timeRecu = true;
+const bool timeNonRecu = false;
+const bool timerPerfNonRecu = false;
+const bool timeAll = false;
 
+int HanoirMain() {
 
     if constexpr (timeRecu || timeAll){
         hanoi game(towerLevels);
@@ -23,10 +27,11 @@ const bool timeAll = true;
         game.playGame<displayTowers>(false);
     }
 
-    if constexpr (timerMyNonRecu || timeAll){
+    if constexpr (timerPerfNonRecu || timeAll){
         hanoi game(towerLevels);
         timer t;
-        game.playGameMySol<displayTowers>();
+        game.playGamePerfNonRecuSol<displayTowers>();
     }
 
+    return 0;
 }
