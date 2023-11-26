@@ -3,9 +3,9 @@
 #include "include/hanoi/hanoiMain.h"
 #include "include/Heaps/HeapsMain.h"
 
-const bool displayBtree = false;
-const bool displayHanoi = false;
-const bool displayHeaps = true;
+static const bool displayBtree = false;
+static const bool displayHanoi = false;
+static const bool displayHeaps = true;
 
 int main()
 {
