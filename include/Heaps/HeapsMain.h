@@ -35,15 +35,21 @@ int HeapsMain()
         using charHeap = Heap<char, void*, std::greater<>, INT8_MAX>;
 
         auto inits = stringToPairs("MINIPWEDU");
-;       charHeap ch1(std::get<0>(inits), std::get<1>(inits));
+;       charHeap ch1 = charHeap::HeapUpToDownFactory(std::get<0>(inits), std::get<1>(inits));
+        std::cout << ch1;
+        ch1 = charHeap(std::get<0>(inits), std::get<1>(inits));
         std::cout << ch1;
 
         inits = stringToPairs("dermatoglyphics");
-        charHeap ch2(std::get<0>(inits), std::get<1>(inits));
+        charHeap ch2 = charHeap::HeapUpToDownFactory(std::get<0>(inits), std::get<1>(inits));
+        std::cout << ch2;
+        ch2 = charHeap(std::get<0>(inits), std::get<1>(inits));
         std::cout << ch2;
 
         inits = stringToPairs("uncopyrightable");
-        charHeap ch3(std::get<0>(inits), std::get<1>(inits));
+        charHeap ch3 = charHeap::HeapUpToDownFactory(std::get<0>(inits), std::get<1>(inits));
+        std::cout << ch3;
+        ch3 = charHeap(std::get<0>(inits), std::get<1>(inits));
         std::cout << ch3;
     }
 

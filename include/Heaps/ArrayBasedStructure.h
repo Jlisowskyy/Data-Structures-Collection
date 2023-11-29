@@ -29,6 +29,9 @@ protected:
 template<typename T, bool IsMemSafe>
 class TArrayBasedStructure: public ArrayBasedStructure {
 protected:
+    // ------------------------------
+    // Type creation/copying
+    // ------------------------------
 
     // Basic construction procedure. That is pointers are null valued and uses inital array length: 128.
     TArrayBasedStructure() {
@@ -54,7 +57,7 @@ protected:
         }
 
         Array = new T[desiredCount];
-        memcpy(Array + cpyStartIndex, mem, memCount);
+        memcpy(Array + cpyStartIndex, mem, memCount*sizeof(T));
     }
 
     // Created fundational array with passed initial size.
@@ -64,6 +67,39 @@ protected:
 
     // Simplified version of above one. Just uses copy of passed memory as initializing array.
     TArrayBasedStructure(const T* mem, const size_t elemCount): TArrayBasedStructure(mem, elemCount, elemCount, 0) {}
+
+    template<bool memSafeCheck>
+    TArrayBasedStructure(const TArrayBasedStructure<T, memSafeCheck>& other):
+        TArrayBasedStructure(other.Array, other.EndP, other.ElemCount, 0) {}
+
+    template<bool memSafeCheck>
+    TArrayBasedStructure(TArrayBasedStructure<T, memSafeCheck>&& other) noexcept(true):
+        ArrayBasedStructure{ other.ElemCount, other.EndP }, Array{ other.Array } {}
+
+    template<bool memSafeCheck>
+    TArrayBasedStructure& operator=(const TArrayBasedStructure<T,memSafeCheck>& other) {
+        ElemCount = other.ElemCount;
+        EndP = other.EndP;
+        delete[] Array;
+
+        Array = new T[ElemCount];
+        memcpy(Array, other.Array, EndP*sizeof(T));
+        return *this;
+    }
+
+    template<bool memSafeCheck>
+    TArrayBasedStructure& operator=(TArrayBasedStructure<T,memSafeCheck>&& other) noexcept(true) {
+        ElemCount = other.ElemCount;
+        EndP = other.EndP;
+        delete[] Array;
+        Array = other.Array;
+        other.Array = nullptr;
+        return *this;
+    }
+
+    // ------------------------------
+    // Type interaction
+    // ------------------------------
 
     TArrayBasedStructure& PasteArrayInto(const T* const mem, const size_t elemCount) {
         if constexpr (IsMemSafe) {
@@ -137,6 +173,13 @@ protected:
         return EndP;
     }
 
+    [[nodiscard]] size_t GetLastElemPos() const {
+        return EndP - 1;
+    }
+
+    // ------------------------------
+    // implementation methods
+    // ------------------------------
 private:
     void _expandArray() {
         const size_t oSize = ElemCount;

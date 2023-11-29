@@ -15,7 +15,7 @@ static constexpr bool IsMemSafe = true;
 template<typename PrioT, typename ItemT, typename PriorityFunction, PrioT MostSignificantPrio>
 class Heap: public TArrayBasedStructure<std::pair<PrioT, ItemT>, IsMemSafe> {
     // ------------------------------
-    // class creation
+    // Type creation/copying
     // ------------------------------
 public:
     using mPair = std::pair<PrioT, ItemT>;
@@ -36,12 +36,30 @@ public:
 
         // Adding Sentinel
         (*this)[0] = std::make_pair(MostSignificantPrio, nullptr);
-        CreateHeapDownToUp();
+        _createHeapDownToUp();
     }
+
+    Heap(const Heap& other): TArrayBasedStructure<mPair, IsMemSafe>(other) {}
+    Heap(Heap&& other) noexcept(true): TArrayBasedStructure<mPair, IsMemSafe>(std::move(other)){}
+
+    Heap& operator=(Heap&& other) noexcept(true) {
+        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this) = std::move(other);
+        return *this;
+    }
+
+    Heap& operator=(const Heap& other) {
+        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this) = other;
+        return *this;
+    }
+
+    // ------------------------------
+    // Class static methods
+    // ------------------------------
 
     static Heap HeapUpToDownFactory(const mPair* const items, const size_t size) {
         Heap ret{size};
-        return ret.CreateHeapUpToDown(items, size);
+        ret._createHeapUpToDown(items, size);
+        return ret;
     }
 
     static void ChangePrintLevelSpacing(const unsigned int newSize) {
@@ -64,7 +82,7 @@ public:
     Heap& Insert(const mPair& pair) {
         const size_t ind = GetEndP();
         AddLast(pair);
-        UpHeap(ind);
+        _upHeap(ind);
 
         return *this;
     }
@@ -76,35 +94,60 @@ public:
     mPair DeleteMax() {
         auto ret = (*this)[1];
         (*this)[1] = RemoveAndReturn();
-        DownHeap(1);
+        _downHeap(1);
         return ret;
     }
 
+    // ------------------------------
+    // Printing methods
+    // ------------------------------
+private:
+    [[nodiscard]] size_t _findMaxPrint() const{
+        if (GetEndP() == 1) return 0;
+        std::ostringstream str{};
+
+        str << std::get<0>((*this)[1]);
+        size_t max = str.str().length();
+        str = std::ostringstream{};
+
+        for (size_t i = 2; i < GetEndP(); ++i) {
+            str << std::get<0>((*this)[i]);
+            if (str.str().length() > max) {
+                max = str.str().length();
+            }
+
+            str = std::ostringstream{};
+        }
+
+        return max;
+    };
+
+public:
     template<typename T1, typename T2, typename SortT, T1 mPrio>
     friend std::ostream& operator <<(std::ostream& out, Heap<T1, T2, SortT, mPrio> hp) {
-        static auto printOffset = [&](size_t off){
+        static auto printOffset = [&](const size_t off){
             for (size_t z = 0; z < off; ++z) {
                 out << ' ';
             }
         };
 
-        if (hp.GetEndP() == 1) out << "[ Empty heap ]";
+        if (hp.GetEndP() == 1) {
+            out << "[ Empty heap ]";
+            return out;
+        }
 
-        std::ostringstream str{};
-        auto max = hp.Max();
-        str << std::get<0>(max);
-        const size_t elemStringSize = str.str().length();
-        const size_t spacingSize = elemStringSize + PrintSpaceDist*2;
+        const size_t elemStringSize = hp._findMaxPrint(); // slow but needed
         const size_t height = std::log2(hp.GetEndP() - 1) + 1; // EndP = n + 1;
-        const size_t MaxLastRowElements = (1 << (height - 1));
+        const size_t MaxLastRowElements = 1 << height - 1;
         const size_t beforeLastRowElements = MaxLastRowElements - 1;
         const size_t LastRowElements = hp.GetEndP() - beforeLastRowElements - 1;
-        const size_t LastLayerChars = LastRowElements * elemStringSize + (LastRowElements - 1) * spacingSize;
+        const size_t LastLayerChars = MaxLastRowElements * elemStringSize + (MaxLastRowElements - 1) * PrintSpaceDist;
 
         size_t elemPerLayer = 1;
-        for(size_t i = 1; i <= height; ++i) {
-            const size_t firstElemDist = LastLayerChars / (elemPerLayer * 2);
-            const size_t interElemDist = 2 * firstElemDist;
+        for(size_t i = 1; i <= height-1; ++i) {
+            const size_t firstElemDist = (LastLayerChars - elemPerLayer*elemStringSize) / (elemPerLayer * 2);
+            const size_t interElemDist = elemPerLayer == 1 ? 0 :
+                (LastLayerChars - elemPerLayer*elemStringSize - 2*firstElemDist) / (elemPerLayer - 1);
 
             printOffset(firstElemDist);
             for(size_t j = 0; j < elemPerLayer; ++j) {
@@ -115,18 +158,24 @@ public:
             out << SpacingString;
             elemPerLayer *= 2;
         }
+
+        // cleaning last line
+        for(size_t j = 0; j < LastRowElements; ++j) {
+            out << std::get<0>(hp[elemPerLayer + j]);
+            printOffset(PrintSpaceDist);
+        }
+        out << std::endl;
         return out;
     }
-
 
     // -------------------------------
     // implementation-components
     // -------------------------------
 private:
-    void UpHeap(size_t i) {
+    void _upHeap(size_t i) {
         mPair elem = (*this)[i];
 
-        for(size_t pInd = GetParent(i); pred(elem.first, (*this)[pInd].first); pInd = GetParent(i) ) {
+        for(size_t pInd = _getParent(i); pred(elem.first, (*this)[pInd].first); pInd = _getParent(i) ) {
             (*this)[i] = (*this)[pInd];
             i = pInd;
         }
@@ -134,13 +183,13 @@ private:
         (*this)[i] = elem;
     }
 
-    void DownHeap(size_t i) {
+    void _downHeap(size_t i) {
         mPair elem = (*this)[i];
 
         const size_t maxInd = GetEndP();
-        for (size_t childInd = GetLeftChild(i); childInd <= maxInd; childInd = GetLeftChild(i)) {
-            if (const size_t rChild = childInd + 1; rChild <= maxInd) {
-                if (pred(rChild, childInd))
+        for (size_t childInd = _getLeftChild(i); childInd < maxInd; childInd = _getLeftChild(i)) {
+            if (const size_t rChild = childInd + 1; rChild < maxInd) {
+                if (pred((*this)[rChild].first, (*this)[childInd].first))
                     childInd = rChild;
             }
 
@@ -154,16 +203,16 @@ private:
         (*this)[i] = elem;
     }
 
-    void MDownHeap(size_t i) {
+    void _mDownHeap(size_t i) {
         mPair elem = (*this)[i];
 
-        const size_t maxInd = GetEndP;
-        for (size_t lChild = GetLeftChild(i); lChild <= maxInd; lChild = GetLeftChild(i)) {
+        const size_t maxInd = GetEndP();
+        for (size_t lChild = _getLeftChild(i); lChild < maxInd; lChild = _getLeftChild(i)) {
             if (pred((*this)[lChild].first, elem.first)) {
                 (*this)[i] = (*this)[lChild];
                 i = lChild;
             }
-            else if (const size_t rChild = lChild + 1; rChild <= maxInd) {
+            else if (const size_t rChild = lChild + 1; rChild < maxInd) {
                     if (pred(rChild, lChild)) {
                         (*this)[i] = (*this)[rChild];
                         i = rChild;
@@ -181,32 +230,36 @@ private:
         AddLast(std::make_pair(MostSignificantPrio, ItemT()));
     }
 
-    void CreateHeapUpToDown(const mPair* const items, const size_t size) {
+    void _createHeapUpToDown(const mPair* const items, const size_t size) {
         for(size_t i = 0; i < size; ++i) {
             Insert(items[i]);
         }
     }
 
     // Expects all elements to be actually copied inside underlying array.
-    void CreateHeapDownToUp() {
-        for(int i = GetEndP() / 2; i >= 1; --i)
-            DownHeap(i);
+    void _createHeapDownToUp() {
+        const size_t height = std::log2(GetEndP() - 1) + 1; // EndP = n + 1;
+        const size_t MaxLastRowElements = 1 << height - 1;
+        const size_t beforeLastRowElements = MaxLastRowElements - 1;
+
+        for(int i = beforeLastRowElements; i >= 1; --i)
+            _downHeap(i);
     }
 
-    static constexpr size_t GetParent(const size_t index) {
+    static constexpr size_t _getParent(const size_t index) {
         return index / 2;
     }
 
-    static constexpr size_t GetLeftChild(const size_t index) {
+    static constexpr size_t _getLeftChild(const size_t index) {
         return 2 * index;
     }
 
-    static constexpr size_t GetRightChild(const size_t index) {
-        return GetLeftChild(index) + 1;
+    static constexpr size_t _getRightChild(const size_t index) {
+        return _getLeftChild(index) + 1;
     }
 
-    PriorityFunction pred;
-    inline static unsigned int PrintSpaceDist = 4;
+    PriorityFunction pred{};
+    inline static unsigned int PrintSpaceDist = 3;
     inline static std::string SpacingString = std::string(PrintSpaceDist, '\n');
 };
 
