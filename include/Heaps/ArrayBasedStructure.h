@@ -8,10 +8,11 @@
 #include <cstring>
 
 class ArrayBasedStructure {
-protected:
+public:
     ArrayBasedStructure(): ElemCount{ InitalSize }, EndP{ 0 } {}
     ArrayBasedStructure(const size_t elemCount, const size_t lastItemPos):
         ElemCount{ elemCount }, EndP { lastItemPos } {}
+    virtual ~ArrayBasedStructure() = default;
 
     [[nodiscard]] bool ShouldExpand() const{
         return EndP == ElemCount;
@@ -74,21 +75,28 @@ protected:
 
     template<bool memSafeCheck>
     TArrayBasedStructure(TArrayBasedStructure<T, memSafeCheck>&& other) noexcept(true):
-        ArrayBasedStructure{ other.ElemCount, other.EndP }, Array{ other.Array } {}
+        ArrayBasedStructure{ other.ElemCount, other.EndP }, Array{ other.Array } {
+        other.Array = nullptr;
+    }
 
+public:
     template<bool memSafeCheck>
     TArrayBasedStructure& operator=(const TArrayBasedStructure<T,memSafeCheck>& other) {
+        if (&other == this) return (*this);
+
         ElemCount = other.ElemCount;
         EndP = other.EndP;
         delete[] Array;
 
-        Array = new T[ElemCount];
+        Array = new T[other.ElemCount];
         memcpy(Array, other.Array, EndP*sizeof(T));
         return *this;
     }
 
     template<bool memSafeCheck>
     TArrayBasedStructure& operator=(TArrayBasedStructure<T,memSafeCheck>&& other) noexcept(true) {
+        if(&other == this) return (*this);
+
         ElemCount = other.ElemCount;
         EndP = other.EndP;
         delete[] Array;
@@ -96,6 +104,12 @@ protected:
         other.Array = nullptr;
         return *this;
     }
+
+    ~TArrayBasedStructure() override {
+        delete[] Array;
+    }
+
+protected:
 
     // ------------------------------
     // Type interaction
@@ -151,7 +165,7 @@ protected:
     }
 
     TArrayBasedStructure& AddLast(const T& item) {
-        if (ShouldExpand()) _expandArray();
+        if (EndP == ElemCount) _expandArray();
 
         Array[EndP++] = item;
         return *this;
@@ -194,8 +208,8 @@ private:
 
     void _expandArray(const size_t newElemCount) {
         ElemCount = newElemCount;
-        const T* arr = Array;
-        Array = new T[ElemCount];
+        T* arr = Array;
+        Array = new T[newElemCount];
 
         // TODO: find consensus here when no mem
 
@@ -203,7 +217,7 @@ private:
         delete[] arr;
     }
 
-    T* Array;
+    T* Array = nullptr;
 };
 
 #endif //ARRAYBASEDSTRUCTURE_H

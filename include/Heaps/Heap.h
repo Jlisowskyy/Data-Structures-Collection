@@ -28,14 +28,14 @@ public:
 
     Heap(): TArrayBasedStructure<mPair, IsMemSafe>() {
         // Ading Sentinel
-        AddLast(std::make_pair(MostSignificantPrio, ItemT()));
+        AddLast(std::make_pair(MostSignificantPrio, ItemT{}));
     }
 
     Heap(const mPair* const items, const size_t size):
         TArrayBasedStructure<mPair, IsMemSafe>(items, size, size+1, 1){
 
         // Adding Sentinel
-        (*this)[0] = std::make_pair(MostSignificantPrio, nullptr);
+        (*this)[0] = std::make_pair(MostSignificantPrio, ItemT{});
         _createHeapDownToUp();
     }
 
@@ -48,9 +48,11 @@ public:
     }
 
     Heap& operator=(const Heap& other) {
-        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this) = other;
+        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this).operator=(other);
         return *this;
     }
+
+    ~Heap() override = default;
 
     // ------------------------------
     // Class static methods
@@ -98,6 +100,14 @@ public:
         return ret;
     }
 
+    const mPair* Search(PrioT prio) {
+        if (GetEndP() == 1) return nullptr;
+
+        size_t ind = _search(prio, 1);
+        if (ind == 0) return nullptr;
+        return &(*this)[ind];
+    }
+
     // ------------------------------
     // Printing methods
     // ------------------------------
@@ -123,8 +133,7 @@ private:
     };
 
 public:
-    template<typename T1, typename T2, typename SortT, T1 mPrio>
-    friend std::ostream& operator <<(std::ostream& out, Heap<T1, T2, SortT, mPrio> hp) {
+    friend std::ostream& operator <<(std::ostream& out, const Heap& hp) {
         static auto printOffset = [&](const size_t off){
             for (size_t z = 0; z < off; ++z) {
                 out << ' ';
@@ -172,6 +181,25 @@ public:
     // implementation-components
     // -------------------------------
 private:
+
+    size_t _search(PrioT prio, size_t ind) {
+        if (prio == (*this)[ind].first) return ind;
+
+        if (pred(prio, (*this)[ind].first)) {
+            return 0;
+        }
+
+        if (const size_t lChild = _getLeftChild(ind) ;  lChild < GetEndP()) {
+            if (const size_t lChildResult = _search(prio, lChild) ; lChildResult != 0) return lChildResult;
+
+            if (const size_t rChild = lChild + 1 ; lChild + 1 < GetEndP()) {
+                if (const size_t rChildResult = _search(prio, rChild); rChildResult != 0) return rChildResult;
+            }
+        }
+
+        return 0;
+    }
+
     void _upHeap(size_t i) {
         mPair elem = (*this)[i];
 
@@ -196,27 +224,6 @@ private:
             if (pred((*this)[childInd].first, elem.first)) {
                 (*this)[i] = (*this)[childInd];
                 i = childInd;
-            }
-            else break;
-        }
-
-        (*this)[i] = elem;
-    }
-
-    void _mDownHeap(size_t i) {
-        mPair elem = (*this)[i];
-
-        const size_t maxInd = GetEndP();
-        for (size_t lChild = _getLeftChild(i); lChild < maxInd; lChild = _getLeftChild(i)) {
-            if (pred((*this)[lChild].first, elem.first)) {
-                (*this)[i] = (*this)[lChild];
-                i = lChild;
-            }
-            else if (const size_t rChild = lChild + 1; rChild < maxInd) {
-                    if (pred(rChild, lChild)) {
-                        (*this)[i] = (*this)[rChild];
-                        i = rChild;
-                    }
             }
             else break;
         }
