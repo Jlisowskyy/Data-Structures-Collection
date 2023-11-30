@@ -7,12 +7,21 @@
 
 #include <cstring>
 
-class ArrayBasedStructure {
+/*              TODOS:
+ *  - rethink all operator[] methods
+ *
+ */
+
+class ArrayBasedStructure
+    /*  Main purpose of this class is to conatin all counters present in derivate classes.
+     *  Is made as a separete class to prevent multiplication of InitialSize field to all templated instances???
+     */
+{
 public:
     ArrayBasedStructure(): ElemCount{ InitalSize }, EndP{ 0 } {}
     ArrayBasedStructure(const size_t elemCount, const size_t lastItemPos):
         ElemCount{ elemCount }, EndP { lastItemPos } {}
-    virtual ~ArrayBasedStructure() = default;
+    ~ArrayBasedStructure() = default;
 
     [[nodiscard]] bool ShouldExpand() const{
         return EndP == ElemCount;
@@ -28,7 +37,11 @@ public:
 };
 
 template<typename T, bool IsMemSafe>
-class TArrayBasedStructure: public ArrayBasedStructure {
+class TArrayBasedStructure: public ArrayBasedStructure
+    /*  Defines all usefull operations on arrays to prevent multiplying code across all arraybased structures
+     *  Does all necessary memory management needed in such structures.
+     */
+{
 protected:
     // ------------------------------
     // Type creation/copying
@@ -105,7 +118,7 @@ public:
         return *this;
     }
 
-    ~TArrayBasedStructure() override {
+    ~TArrayBasedStructure() {
         delete[] Array;
     }
 
@@ -161,7 +174,7 @@ protected:
                 throw std::runtime_error("Array is empty");
         }
 
-        return Array[EndP--];
+        return Array[--EndP];
     }
 
     TArrayBasedStructure& AddLast(const T& item) {
@@ -171,11 +184,11 @@ protected:
         return *this;
     }
 
-    T& operator[](size_t ind) {
+    T& GetItem(size_t ind) {
         return Array[ind];
     }
 
-    const T& operator[](size_t ind) const {
+    const T& GetItem(size_t ind) const {
         return Array[ind];
     }
 

@@ -69,7 +69,17 @@ int HeapsMain()
             std::cout << "W - removed: \n" << mini;
             std::cout << "W - added: \n" << mini.Insert(std::make_pair('W', 6));
             const auto result  = mini.Search('D');
-            std::cout << "D - found with value: " << result->second << std::endl;
+            std::cout << "D - found with value: " << mini[result].second << std::endl;
+            std::pair<char, int> pair1;
+            std::pair<char, int> pair2;
+
+            mini.Delete(HeapIndex(0), pair1); mini.Delete(HeapIndex(5), pair2);
+            std::cout << "Deleted items: " << pair1.first << ' ' << pair2.first << "\nCurrent Tree:\n" << mini;
+            mini.Insert(pair1).Insert(pair2);
+            std::cout << "\nInserted again. Tree:\n" << mini;
+            mini.Replace(HeapIndex(mini.GetLastIndex()), std::make_pair('Z', 0));
+            std::cout << "\nReplaced last item to Z:\n" << mini;
+
 
             delete[] std::get<0>(inits);
         }
@@ -125,7 +135,7 @@ int HeapsMain()
                   << "                 Floating-point times and complexity measures\n"
                   << "-----------------------------------------------------------------------------\n";
 
-        static constexpr auto testRange = static_cast<size_t>(1e+6);
+        static constexpr auto testRange = static_cast<size_t>(1e+8);
         auto* arr = new std::pair<double, double>[testRange];
         for (size_t i = 0; i <testRange; ++i) {
             arr[i].first = static_cast<double>(i);

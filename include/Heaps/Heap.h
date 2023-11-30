@@ -9,8 +9,9 @@
 #include <iostream>
 
 #include "ArrayBasedStructure.h"
+#include "HeapHelpers.h"
 
-static constexpr bool IsMemSafe = true;
+static constexpr bool IsMemSafe = false;
 
 template<typename PrioT, typename ItemT, typename PriorityFunction, PrioT MostSignificantPrio>
 class Heap: public TArrayBasedStructure<std::pair<PrioT, ItemT>, IsMemSafe> {
@@ -19,12 +20,15 @@ class Heap: public TArrayBasedStructure<std::pair<PrioT, ItemT>, IsMemSafe> {
     // ------------------------------
 public:
     using mPair = std::pair<PrioT, ItemT>;
+private:
     using base = TArrayBasedStructure<mPair, IsMemSafe>;
     using base::GetSize;
     using base::GetEndP;
     using base::AddLast;
     using base::RemoveLast;
     using base::RemoveAndReturn;
+    using base::GetItem;
+public:
 
     Heap(): TArrayBasedStructure<mPair, IsMemSafe>() {
         // Ading Sentinel
@@ -35,7 +39,7 @@ public:
         TArrayBasedStructure<mPair, IsMemSafe>(items, size, size+1, 1){
 
         // Adding Sentinel
-        (*this)[0] = std::make_pair(MostSignificantPrio, ItemT{});
+        GetItem(0) = std::make_pair(MostSignificantPrio, ItemT{});
         _createHeapDownToUp();
     }
 
@@ -52,7 +56,7 @@ public:
         return *this;
     }
 
-    ~Heap() override = default;
+    ~Heap() = default;
 
     // ------------------------------
     // Class static methods
@@ -78,7 +82,13 @@ public:
     }
 
     [[nodiscard]] size_t ElementsCount() const {
-        return GetEndP();
+        return GetEndP()-1;
+    }
+
+    [[nodiscard]] size_t GetLastIndex() const
+        // offset ready for HeapIndexClass
+    {
+        return GetEndP() - 2;
     }
 
     Heap& Insert(const mPair& pair) {
@@ -89,23 +99,82 @@ public:
         return *this;
     }
 
-    const mPair& Max() const {
-        return (*this)[1];
+    [[nodiscard]] const mPair& Max() const
+        // when heap is empty behaviour is undefined
+    {
+        return GetItem(1);
     }
 
-    mPair DeleteMax() {
-        auto ret = (*this)[1];
-        (*this)[1] = RemoveAndReturn();
+    Heap& DeleteMax(mPair& out)
+        // when heap is empty behaviour is undefined
+    {
+        out = GetItem(1);
+
+        GetItem(1) = RemoveAndReturn();
         _downHeap(1);
+        return *this;
+    }
+
+    Heap& DeleteMax()
+        // when heap is empty behaviour is undefined
+    {
+        GetItem(1) = RemoveAndReturn();
+        _downHeap(1);
+        return *this;
+    }
+
+    [[nodiscard]] bool IsEmpty() const{
+        return GetEndP() == 1;
+    }
+
+    [[nodiscard]] HeapIndex Search(PrioT prio)
+        // when heap is empty behaviour is undefined
+        // Return: index of found element. Output can be invalid
+    {
+        HeapIndex ret{};
+        ret.index = _search(prio, 1);
         return ret;
     }
 
-    const mPair* Search(PrioT prio) {
-        if (GetEndP() == 1) return nullptr;
+    Heap& Delete(const HeapIndex index, mPair& out)
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = index;
+        out = GetItem(i);
+        _delete(i);
 
-        size_t ind = _search(prio, 1);
-        if (ind == 0) return nullptr;
-        return &(*this)[ind];
+        return *this;
+    }
+
+    Heap& Delete(const HeapIndex index)
+    // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = index;
+        _delete(i);
+        return *this;
+    }
+
+    Heap& Replace(const HeapIndex ind, const mPair& newItem, mPair& oItem)
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = ind;
+        oItem = GetItem(i);;
+        _replace(i, newItem);
+        return *this;
+    }
+
+    Heap& Replace(const HeapIndex ind, const mPair& newItem)
+    // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = ind;
+        _replace(i, newItem);
+        return *this;
+    }
+
+    const mPair& operator[](const HeapIndex ind) const
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        return GetItem(ind);;
     }
 
     // ------------------------------
@@ -113,15 +182,15 @@ public:
     // ------------------------------
 private:
     [[nodiscard]] size_t _findMaxPrint() const{
-        if (GetEndP() == 1) return 0;
+        if (IsEmpty()) return 0;
         std::ostringstream str{};
 
-        str << std::get<0>((*this)[1]);
+        str << std::get<0>(GetItem(1));
         size_t max = str.str().length();
         str = std::ostringstream{};
 
         for (size_t i = 2; i < GetEndP(); ++i) {
-            str << std::get<0>((*this)[i]);
+            str << std::get<0>(GetItem(i));
             if (str.str().length() > max) {
                 max = str.str().length();
             }
@@ -160,7 +229,7 @@ public:
 
             printOffset(firstElemDist);
             for(size_t j = 0; j < elemPerLayer; ++j) {
-                out << std::get<0>(hp[elemPerLayer + j]);
+                out << std::get<0>(hp.GetItem(elemPerLayer + j));
                 printOffset(interElemDist);
             }
 
@@ -170,7 +239,7 @@ public:
 
         // cleaning last line
         for(size_t j = 0; j < LastRowElements; ++j) {
-            out << std::get<0>(hp[elemPerLayer + j]);
+            out << std::get<0>(hp.GetItem(elemPerLayer + j));
             printOffset(PrintSpaceDist);
         }
         out << std::endl;
@@ -182,10 +251,28 @@ public:
     // -------------------------------
 private:
 
-    size_t _search(PrioT prio, size_t ind) {
-        if (prio == (*this)[ind].first) return ind;
+    void _delete(size_t i) {
+        if (i == GetEndP()-1) {
+            RemoveLast();
+            return;
+        }
 
-        if (pred(prio, (*this)[ind].first)) {
+        GetItem(i) = RemoveAndReturn();
+        _downHeap(i);
+    }
+
+    void _replace(size_t i, const mPair& item) {
+        GetItem(i) = item;
+
+        if (i == 1) _downHeap(i);
+        else if (pred(item.first, GetItem(_getParent(i)).first)) _upHeap(i);
+        else _downHeap(i);
+    }
+
+    size_t _search(PrioT prio, size_t ind) {
+        if (prio == GetItem(ind).first) return ind;
+
+        if (pred(prio, GetItem(ind).first)) {
             return 0;
         }
 
@@ -201,34 +288,34 @@ private:
     }
 
     void _upHeap(size_t i) {
-        mPair elem = (*this)[i];
+        mPair elem = GetItem(i);
 
-        for(size_t pInd = _getParent(i); pred(elem.first, (*this)[pInd].first); pInd = _getParent(i) ) {
-            (*this)[i] = (*this)[pInd];
+        for(size_t pInd = _getParent(i); pred(elem.first, GetItem(pInd).first); pInd = _getParent(i) ) {
+            GetItem(i) = GetItem(pInd);
             i = pInd;
         }
 
-        (*this)[i] = elem;
+        GetItem(i) = elem;
     }
 
     void _downHeap(size_t i) {
-        mPair elem = (*this)[i];
+        mPair elem = GetItem(i);
 
         const size_t maxInd = GetEndP();
         for (size_t childInd = _getLeftChild(i); childInd < maxInd; childInd = _getLeftChild(i)) {
             if (const size_t rChild = childInd + 1; rChild < maxInd) {
-                if (pred((*this)[rChild].first, (*this)[childInd].first))
+                if (pred(GetItem(rChild).first, GetItem(childInd).first))
                     childInd = rChild;
             }
 
-            if (pred((*this)[childInd].first, elem.first)) {
-                (*this)[i] = (*this)[childInd];
+            if (pred(GetItem(childInd).first, elem.first)) {
+                GetItem(i) = GetItem(childInd);
                 i = childInd;
             }
             else break;
         }
 
-        (*this)[i] = elem;
+        GetItem(i) = elem;
     }
 
     // Private constructor used only inside UpToDown factory.
