@@ -14,7 +14,7 @@
 static constexpr bool IsMemSafe = false;
 
 template<typename PrioT, typename ItemT, typename PriorityFunction, PrioT MostSignificantPrio>
-class Heap: public TArrayBasedStructure<std::pair<PrioT, ItemT>, IsMemSafe> {
+class _baseHeapT: public TArrayBasedStructure<std::pair<PrioT, ItemT>, IsMemSafe> {
     // ------------------------------
     // Type creation/copying
     // ------------------------------
@@ -22,7 +22,7 @@ public:
     using mPair = std::pair<PrioT, ItemT>;
 private:
     using base = TArrayBasedStructure<mPair, IsMemSafe>;
-    using base::GetSize;
+    using base::GetElemCount;
     using base::GetEndP;
     using base::AddLast;
     using base::RemoveLast;
@@ -30,12 +30,12 @@ private:
     using base::GetItem;
 public:
 
-    Heap(): TArrayBasedStructure<mPair, IsMemSafe>() {
+    _baseHeapT(): TArrayBasedStructure<mPair, IsMemSafe>() {
         // Ading Sentinel
         AddLast(std::make_pair(MostSignificantPrio, ItemT{}));
     }
 
-    Heap(const mPair* const items, const size_t size):
+    _baseHeapT(const mPair* const items, const size_t size):
         TArrayBasedStructure<mPair, IsMemSafe>(items, size, size+1, 1){
 
         // Adding Sentinel
@@ -43,27 +43,27 @@ public:
         _createHeapDownToUp();
     }
 
-    Heap(const Heap& other): TArrayBasedStructure<mPair, IsMemSafe>(other) {}
-    Heap(Heap&& other) noexcept(true): TArrayBasedStructure<mPair, IsMemSafe>(std::move(other)){}
+    _baseHeapT(const _baseHeapT& other): TArrayBasedStructure<mPair, IsMemSafe>(other) {}
+    _baseHeapT(_baseHeapT&& other) noexcept(true): TArrayBasedStructure<mPair, IsMemSafe>(std::move(other)){}
 
-    Heap& operator=(Heap&& other) noexcept(true) {
-        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this) = std::move(other);
+    _baseHeapT& operator=(_baseHeapT&& other) noexcept(true) {
+        base::operator=(std::move(other));
         return *this;
     }
 
-    Heap& operator=(const Heap& other) {
-        static_cast<TArrayBasedStructure<mPair, IsMemSafe> &>(*this).operator=(other);
+    _baseHeapT& operator=(const _baseHeapT& other) {
+        base::operator=(other);
         return *this;
     }
 
-    ~Heap() = default;
+    ~_baseHeapT() = default;
 
     // ------------------------------
     // Class static methods
     // ------------------------------
 
-    static Heap HeapUpToDownFactory(const mPair* const items, const size_t size) {
-        Heap ret{size};
+    static _baseHeapT HeapUpToDownFactory(const mPair* const items, const size_t size) {
+        _baseHeapT ret{size};
         ret._createHeapUpToDown(items, size);
         return ret;
     }
@@ -78,7 +78,7 @@ public:
     // ------------------------------
 
     [[nodiscard]] size_t MemSize() const {
-        return GetSize();
+        return GetElemCount();
     }
 
     [[nodiscard]] size_t ElementsCount() const {
@@ -91,11 +91,8 @@ public:
         return GetEndP() - 2;
     }
 
-    Heap& Insert(const mPair& pair) {
-        const size_t ind = GetEndP();
-        AddLast(pair);
-        _upHeap(ind);
-
+    _baseHeapT& Insert(const mPair& pair) {
+        _insert(pair);
         return *this;
     }
 
@@ -105,21 +102,19 @@ public:
         return GetItem(1);
     }
 
-    Heap& DeleteMax(mPair& out)
+    _baseHeapT& DeleteMax(mPair& out)
         // when heap is empty behaviour is undefined
     {
         out = GetItem(1);
 
-        GetItem(1) = RemoveAndReturn();
-        _downHeap(1);
+        _deleteMax();
         return *this;
     }
 
-    Heap& DeleteMax()
+    _baseHeapT& DeleteMax()
         // when heap is empty behaviour is undefined
     {
-        GetItem(1) = RemoveAndReturn();
-        _downHeap(1);
+        _deleteMax();
         return *this;
     }
 
@@ -136,7 +131,7 @@ public:
         return ret;
     }
 
-    Heap& Delete(const HeapIndex index, mPair& out)
+    _baseHeapT& Delete(const HeapIndex index, mPair& out)
         // when heap is empty or index is out of range behaviour is undefined
     {
         const size_t i = index;
@@ -146,7 +141,7 @@ public:
         return *this;
     }
 
-    Heap& Delete(const HeapIndex index)
+    _baseHeapT& Delete(const HeapIndex index)
     // when heap is empty or index is out of range behaviour is undefined
     {
         const size_t i = index;
@@ -154,16 +149,16 @@ public:
         return *this;
     }
 
-    Heap& Replace(const HeapIndex ind, const mPair& newItem, mPair& oItem)
+    _baseHeapT& Replace(const HeapIndex ind, const mPair& newItem, mPair& oItem)
         // when heap is empty or index is out of range behaviour is undefined
     {
         const size_t i = ind;
-        oItem = GetItem(i);;
+        oItem = GetItem(i);
         _replace(i, newItem);
         return *this;
     }
 
-    Heap& Replace(const HeapIndex ind, const mPair& newItem)
+    _baseHeapT& Replace(const HeapIndex ind, const mPair& newItem)
     // when heap is empty or index is out of range behaviour is undefined
     {
         const size_t i = ind;
@@ -174,7 +169,7 @@ public:
     const mPair& operator[](const HeapIndex ind) const
         // when heap is empty or index is out of range behaviour is undefined
     {
-        return GetItem(ind);;
+        return GetItem(ind);
     }
 
     // ------------------------------
@@ -199,10 +194,30 @@ private:
         }
 
         return max;
-    };
+    }
 
 public:
-    friend std::ostream& operator <<(std::ostream& out, const Heap& hp) {
+    friend std::ostream& operator <<(std::ostream& out, const _baseHeapT& hp) {
+        return hp._print(out, hp);
+    }
+
+    // -------------------------------
+    // implementation-components
+    // -------------------------------
+private:
+
+    void _insert(const mPair& pair) {
+        const size_t ind = GetEndP();
+        AddLast(pair);
+        _upHeap(ind);
+    }
+
+    void _deleteMax() {
+        GetItem(1) = RemoveAndReturn();
+        _downHeap(1);
+    }
+
+    std::ostream& _print(std::ostream& out, const _baseHeapT& hp) const {
         static auto printOffset = [&](const size_t off){
             for (size_t z = 0; z < off; ++z) {
                 out << ' ';
@@ -245,11 +260,6 @@ public:
         out << std::endl;
         return out;
     }
-
-    // -------------------------------
-    // implementation-components
-    // -------------------------------
-private:
 
     void _delete(size_t i) {
         if (i == GetEndP()-1) {
@@ -319,7 +329,7 @@ private:
     }
 
     // Private constructor used only inside UpToDown factory.
-    explicit Heap(const size_t initSize): TArrayBasedStructure<mPair, IsMemSafe>(initSize+1) {
+    explicit _baseHeapT(const size_t initSize): TArrayBasedStructure<mPair, IsMemSafe>(initSize+1) {
         // Ading Sentinel
         AddLast(std::make_pair(MostSignificantPrio, ItemT()));
     }
@@ -351,6 +361,10 @@ private:
     static constexpr size_t _getRightChild(const size_t index) {
         return _getLeftChild(index) + 1;
     }
+
+    // ------------------------------
+    // private class Fields
+    // ------------------------------
 
     PriorityFunction pred{};
     inline static unsigned int PrintSpaceDist = 3;

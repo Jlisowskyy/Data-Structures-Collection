@@ -11,21 +11,24 @@
 #include <cfloat>
 #include <string>
 
-#include "Beap.h"
-#include "Heap.h"
+#include "_baseBeapT.h"
+#include "_baseHeapT.h"
 #include "../Debuggers.hpp"
 
-static const bool displayBeap = false;
-static const bool displayHeap = true;
+static constexpr bool displayBeap = true;
+static constexpr bool displayHeap = false;
 
-int HeapsMain()
+inline int HeapsMain()
 {
     if constexpr (displayBeap) {
+        using charBeap = _baseBeapT<char, char, std::greater<>, INT8_MAX>;
 
+        charBeap ch;
+        ch.Test();
     }
 
     if constexpr (displayHeap) {
-        auto stringToPairs = [](const std::string str) {
+        auto stringToPairs = [](const std::string& str) {
             auto pairs = new std::pair<char, int>[str.size()];
 
             for(size_t i = 0; i < str.size(); ++i) {
@@ -35,7 +38,7 @@ int HeapsMain()
             return std::make_tuple(pairs, str.size());
         };
 
-        using charHeap = Heap<char, int, std::greater<>, INT8_MAX>;
+        using charHeap = _baseHeapT<char, int, std::greater<>, INT8_MAX>;
         std::cout << "-----------------------------------------------------------------------------\n"
                   << "                           Character heap examples\n"
                   << "-----------------------------------------------------------------------------\n";
@@ -89,10 +92,10 @@ int HeapsMain()
                   << "                           Int heap examples\n"
                   << "-----------------------------------------------------------------------------\n";
 
-        using intHeap = Heap<int, void*, std::greater<>, INT_MAX>;
+        using intHeap = _baseHeapT<int, int, std::greater<>, INT_MAX>;
 
         auto getRandomElementsNArray = [](const size_t arrSize) {
-            const auto arr = new std::pair<int, void*>[arrSize];
+            const auto arr = new std::pair<int, int>[arrSize];
 
             for(size_t i = 0; i < arrSize; ++i) {
                 arr[i].first = rand();
@@ -102,7 +105,7 @@ int HeapsMain()
         };
 
         auto getSimpleNArray = [](const size_t arrSize) {
-            const auto arr = new std::pair<int, void*>[arrSize];
+            const auto arr = new std::pair<int, int>[arrSize];
 
             for(size_t i = 0; i < arrSize; ++i) {
                 arr[i].first = static_cast<int>(i);
@@ -111,9 +114,9 @@ int HeapsMain()
             return arr;
         };
 
-        std::pair<int, void*>* intArrs[] = { getSimpleNArray(32), getSimpleNArray(64),
-                                                    getSimpleNArray(128), getRandomElementsNArray(72),
-                                                    getRandomElementsNArray(49), getRandomElementsNArray(25) };
+        std::pair<int, int>* intArrs[] = { getSimpleNArray(32), getSimpleNArray(64),
+                                            getSimpleNArray(128), getRandomElementsNArray(72),
+                                            getRandomElementsNArray(49), getRandomElementsNArray(25) };
         const static int ranges[] = { 32, 64, 128, 72, 49, 25 };
 
         for(size_t i = 0; i < 6; ++i){
@@ -130,26 +133,34 @@ int HeapsMain()
             delete[] intArr;
         }
 
-        using doubleHeap = Heap<double, double, std::greater<>, DBL_MAX>;
+        using doubleHeap = _baseHeapT<double, double, std::greater<>, DBL_MAX>;
         std::cout << "-----------------------------------------------------------------------------\n"
                   << "                 Floating-point times and complexity measures\n"
                   << "-----------------------------------------------------------------------------\n";
 
-        static constexpr auto testRange = static_cast<size_t>(1e+8);
-        auto* arr = new std::pair<double, double>[testRange];
-        for (size_t i = 0; i <testRange; ++i) {
-            arr[i].first = static_cast<double>(i);
+        static constexpr size_t testRanges[] = { static_cast<size_t>(1e+6), static_cast<size_t>(1e+7), static_cast<size_t>(1e+8) };
+
+        for (auto range: testRanges) {
+            std::cout << "-----------------------------";
+            std::cout << "\nMeasuring heap building time with: " << range << " double precision floating point priorities\n";
+            std::cout << "-----------------------------\n";
+
+            auto* arr = new std::pair<double, double>[range];
+            for (size_t i = 0; i < range; ++i) {
+                arr[i].first = static_cast<double>(i);
+            }
+
+            Timer T1("Down to up heap building", false);
+            doubleHeap h1(arr, range);
+            T1.Stop();
+
+            Timer T2("Up to down heap building", false);
+            auto h2 = std::move(doubleHeap::HeapUpToDownFactory(arr, range));
+            T2.Stop();
+
+            delete[] arr;
         }
 
-        timer T1;
-        doubleHeap h1(arr, testRange);
-        T1.Stop();
-
-        timer T2;
-        auto h2 = std::move(doubleHeap::HeapUpToDownFactory(arr, testRange));
-        T2.Stop();
-
-        delete[] arr;
     }
 
     return EXIT_SUCCESS;

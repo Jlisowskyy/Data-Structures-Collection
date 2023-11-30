@@ -6,6 +6,7 @@
 #define ARRAYBASEDSTRUCTURE_H
 
 #include <cstring>
+#include <cmath>
 
 /*              TODOS:
  *  - rethink all operator[] methods
@@ -95,7 +96,7 @@ protected:
 public:
     template<bool memSafeCheck>
     TArrayBasedStructure& operator=(const TArrayBasedStructure<T,memSafeCheck>& other) {
-        if (&other == this) return (*this);
+        if (&other == this) return *this;
 
         ElemCount = other.ElemCount;
         EndP = other.EndP;
@@ -108,7 +109,7 @@ public:
 
     template<bool memSafeCheck>
     TArrayBasedStructure& operator=(TArrayBasedStructure<T,memSafeCheck>&& other) noexcept(true) {
-        if(&other == this) return (*this);
+        if(&other == this) return *this;
 
         ElemCount = other.ElemCount;
         EndP = other.EndP;
@@ -192,7 +193,7 @@ protected:
         return Array[ind];
     }
 
-    [[nodiscard]] size_t GetSize() const {
+    [[nodiscard]] size_t GetElemCount() const {
         return ElemCount;
     }
 
@@ -221,7 +222,7 @@ private:
 
     void _expandArray(const size_t newElemCount) {
         ElemCount = newElemCount;
-        T* arr = Array;
+        const T* arr = Array;
         Array = new T[newElemCount];
 
         // TODO: find consensus here when no mem

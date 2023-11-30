@@ -20,7 +20,10 @@ public:
     [[nodiscard]] bool isValid() const { return  index != 0; }
 private:
     template<typename PrioT, typename ItemT, typename PriorityFunction, PrioT MostSignificantPrio>
-    friend class Heap;
+    friend class _baseHeapT;
+
+    template<typename PrioT, typename ItemT, typename PriorityFunction, PrioT MostSignificantPrio>
+    friend class _baseBeapT;
 
     HeapIndex(): index{ 0 } {}
     size_t index;
