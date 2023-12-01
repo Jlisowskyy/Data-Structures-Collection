@@ -83,8 +83,6 @@ public:
     // class interaction
     // ------------------------------
 
-
-//
 //     [[nodiscard]] size_t MemSize() const {
 //         return GetElemCount();
 //     }
@@ -203,11 +201,11 @@ public:
 //
 //         return max;
 //     }
-//
-// public:
-//     friend std::ostream& operator <<(std::ostream& out, const _baseBeapT& hp) {
-//         return hp._print(out, hp);
-//     }
+
+public:
+    friend std::ostream& operator <<(std::ostream& out, const _baseBeapT& hp) {
+        return hp._print(out, hp);
+    }
 
     // ----------------------------------
     // Debug and testing procedures
@@ -232,7 +230,9 @@ public:
     // implementation-components
     // -------------------------------
 private:
-    void _upHeap(size_t index) {
+    void _upBeap(size_t index)
+        // Basic simplest implementation
+    {
         static constexpr size_t fCord = 1; // First elemen inside the row
 
         mPair elem = GetItem(index);
@@ -247,28 +247,97 @@ private:
                     GetItem(index) = GetItem(pCord);
                     index = pCord;
                 }
-                break;
+                else break;
             }
-
-            if (col == 1)
+            else if (col == 1)
                 // We are at the first element of row, so there is only right parent possible.
                 // We are sure that we are not inside root because this is always processed in previous if statement.
             {
-                // auto [rCol, rRow] = std::make_pair(row - 1, fCord);
                 if (size_t pCord = index - row + 1; pred(elem.first, GetItem(pCord).first) ){
                     GetItem(index) = GetItem(pCord);
                     index = pCord;
                     --row;
                 }
-                break;
+                else break;
             }
-
-
-            // We are not at the first element neither the last.
-            auto [lCord, rCord] = std::make_pair(index - row, index - row + 1);
-            if (pred(GetItem(lCord).first, GetItem(rCord).first ))
-
+            else
+                // We are not at the first element neither the last.
+            {
+                if (auto [lCord, rCord] = std::make_pair(index - row, index - row + 1); pred(GetItem(lCord).first, GetItem(rCord).first ))
+                    // left parent is bigger, we swap with smaller one to preserve heap rule
+                {
+                    if (pred(elem.first, GetItem(rCord))) {
+                        GetItem(index) = GetItem(rCord);
+                        index = rCord;
+                        --row;
+                    }
+                    else break;
+                }
+                else
+                    // right is bigger, we swap with smaller one to preserve heap rule
+                {
+                    if (pred(elem.first, GetItem(lCord))) {
+                        GetItem(index) = GetItem(lCord);
+                        index = lCord;
+                        --row; --col;
+                    }
+                    else break;
+                }
+            }
         }
+
+        GetItem(index) = elem;
+    }
+
+    void _downBeap(size_t index)
+        // Basic simplest implementation
+    {
+        static constexpr size_t fCord = 1; // First elemen inside the row
+
+        mPair elem = GetItem(index);
+        auto [row, col] = _getBeapPos(index);
+
+        size_t lChild = index + row;
+        while(lChild < GetEndP())
+            // We check whether left child exists
+        {
+            if (size_t rChild = lChild + 1; rChild < GetEndP() && rChild <= row + 1)
+                // both childs exists
+            {
+                if (pred(GetItem(rChild).first, GetItem(lChild).first))
+                    // right child is bigger
+                {
+                    if (pred(GetItem(rChild).first, elem.first)) {
+                        GetItem(index) = GetItem(rChild);
+                        index = rChild;
+                        ++row; ++col;
+                    }
+                    else break;
+                }
+                else
+                    // left child is bigger
+                {
+                    if (pred(GetItem(lChild).first, elem.first)) {
+                        GetItem(index) = GetItem(lChild);
+                        index = lChild;
+                        ++row;
+                    }
+                    else break;
+                }
+            }
+            else
+                // only left child exists
+            {
+                if (pred(GetItem(lChild).first, elem.first)) {
+                    GetItem(index) = GetItem(lChild);
+                    index = lChild;
+                    ++row;
+                }
+                else break;
+            }
+        }
+
+        GetItem(index) = elem;
     }
 
     static constexpr size_t _getRowPos(const size_t ind) {
@@ -289,7 +358,6 @@ private:
         const size_t elementsOnPreviousRows = (rPos - 1) * rPos / 2;
         return elementsOnPreviousRows + cPos;
     }
-
 
     // ------------------------------
     // private class Fields

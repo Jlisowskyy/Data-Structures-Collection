@@ -15,8 +15,8 @@
 #include "_baseHeapT.h"
 #include "../Debuggers.hpp"
 
-static constexpr bool displayBeap = true;
-static constexpr bool displayHeap = false;
+static constexpr bool displayBeap = false;
+static constexpr bool displayHeap = true;
 
 inline int HeapsMain()
 {

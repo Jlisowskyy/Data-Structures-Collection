@@ -230,11 +230,13 @@ private:
         }
 
         const size_t elemStringSize = hp._findMaxPrint(); // slow but needed
+        out << std::setw(elemStringSize) << std::setfill(' ');
         const size_t height = std::log2(hp.GetEndP() - 1) + 1; // EndP = n + 1;
         const size_t MaxLastRowElements = 1 << height - 1;
         const size_t beforeLastRowElements = MaxLastRowElements - 1;
         const size_t LastRowElements = hp.GetEndP() - beforeLastRowElements - 1;
-        const size_t LastLayerChars = MaxLastRowElements * elemStringSize + (MaxLastRowElements - 1) * PrintSpaceDist;
+        const size_t LastRowSpacing = PrintSpaceDist + elemStringSize;
+        const size_t LastLayerChars = MaxLastRowElements * elemStringSize + (MaxLastRowElements - 1) * LastRowSpacing;
 
         size_t elemPerLayer = 1;
         for(size_t i = 1; i <= height-1; ++i) {
@@ -255,7 +257,7 @@ private:
         // cleaning last line
         for(size_t j = 0; j < LastRowElements; ++j) {
             out << std::get<0>(hp.GetItem(elemPerLayer + j));
-            printOffset(PrintSpaceDist);
+            printOffset(LastRowSpacing);
         }
         out << std::endl;
         return out;
