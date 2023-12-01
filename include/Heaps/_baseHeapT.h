@@ -62,7 +62,7 @@ public:
     // Class static methods
     // ------------------------------
 
-    static _baseHeapT HeapUpToDownFactory(const mPair* const items, const size_t size) {
+    static _baseHeapT UpToDownFactory(const mPair* const items, const size_t size) {
         _baseHeapT ret{size};
         ret._createHeapUpToDown(items, size);
         return ret;
@@ -240,9 +240,9 @@ private:
 
         size_t elemPerLayer = 1;
         for(size_t i = 1; i <= height-1; ++i) {
-            const size_t firstElemDist = (LastLayerChars - elemPerLayer*elemStringSize) / (elemPerLayer * 2);
+            const size_t firstElemDist = std::floor((double)(LastLayerChars - elemPerLayer*elemStringSize) / (double)(elemPerLayer * 2));
             const size_t interElemDist = elemPerLayer == 1 ? 0 :
-                (LastLayerChars - elemPerLayer*elemStringSize - 2*firstElemDist) / (elemPerLayer - 1);
+                std::floor((double)(LastLayerChars - elemPerLayer*elemStringSize - 2*firstElemDist) / (double)(elemPerLayer - 1));
 
             printOffset(firstElemDist);
             for(size_t j = 0; j < elemPerLayer; ++j) {
@@ -264,7 +264,7 @@ private:
     }
 
     void _delete(size_t i) {
-        if (i == GetEndP()-1) {
+        if (i == GetEndP()-1) [[unlikely]]{
             RemoveLast();
             return;
         }
@@ -276,8 +276,7 @@ private:
     void _replace(size_t i, const mPair& item) {
         GetItem(i) = item;
 
-        if (i == 1) _downHeap(i);
-        else if (pred(item.first, GetItem(_getParent(i)).first)) _upHeap(i);
+        if (pred(item.first, GetItem(_getParent(i)).first)) _upHeap(i);
         else _downHeap(i);
     }
 

@@ -43,8 +43,7 @@ public:
 
         // Adding Sentinel
         GetItem(0) = std::make_pair(MostSignificantPrio, ItemT{});
-
-        // TODO: CREATION PROCEDURE
+        _createBeapFromDownToUp();
     }
 
     _baseBeapT(const _baseBeapT& other): TArrayBasedStructure<mPair, IsMemSafe1>(other) {}
@@ -66,11 +65,9 @@ public:
     // Class static methods
     // ------------------------------
 
-    static _baseBeapT BeapUpToDownFactory(const mPair* const items, const size_t size) {
+    static _baseBeapT UpToDownFactory(const mPair* const items, const size_t size) {
         _baseBeapT ret{size};
-
-        // TODO: Beap creation procedure
-
+        ret._createBeapFromUpToDown(items, size);
         return ret;
     }
 
@@ -83,124 +80,124 @@ public:
     // class interaction
     // ------------------------------
 
-//     [[nodiscard]] size_t MemSize() const {
-//         return GetElemCount();
-//     }
-//
-//     [[nodiscard]] size_t ElementsCount() const {
-//         return GetEndP()-1;
-//     }
-//
-//     [[nodiscard]] size_t GetLastIndex() const
-//         // offset ready for HeapIndexClass
-//     {
-//         return GetEndP() - 2;
-//     }
-//
-//     _baseBeapT& Insert(const mPair& pair) {
-//         _insert(pair);
-//         return *this;
-//     }
-//
-//     [[nodiscard]] const mPair& Max() const
-//         // when heap is empty behaviour is undefined
-//     {
-//         return GetItem(1);
-//     }
-//
-//     _baseBeapT& DeleteMax(mPair& out)
-//         // when heap is empty behaviour is undefined
-//     {
-//         out = GetItem(1);
-//
-//         _deleteMax();
-//         return *this;
-//     }
-//
-//     _baseBeapT& DeleteMax()
-//         // when heap is empty behaviour is undefined
-//     {
-//         _deleteMax();
-//         return *this;
-//     }
-//
-//     [[nodiscard]] bool IsEmpty() const{
-//         return GetEndP() == 1;
-//     }
-//
-//     [[nodiscard]] HeapIndex Search(PrioT prio)
-//         // when heap is empty behaviour is undefined
-//         // Return: index of found element. Output can be invalid
-//     {
-//         HeapIndex ret{};
-//         ret.index = _search(prio, 1);
-//         return ret;
-//     }
-//
-//     _baseBeapT& Delete(const HeapIndex index, mPair& out)
-//         // when heap is empty or index is out of range behaviour is undefined
-//     {
-//         const size_t i = index;
-//         out = GetItem(i);
-//         _delete(i);
-//
-//         return *this;
-//     }
-//
-//     _baseBeapT& Delete(const HeapIndex index)
-//     // when heap is empty or index is out of range behaviour is undefined
-//     {
-//         const size_t i = index;
-//         _delete(i);
-//         return *this;
-//     }
-//
-//     _baseBeapT& Replace(const HeapIndex ind, const mPair& newItem, mPair& oItem)
-//         // when heap is empty or index is out of range behaviour is undefined
-//     {
-//         const size_t i = ind;
-//         oItem = GetItem(i);
-//         _replace(i, newItem);
-//         return *this;
-//     }
-//
-//     _baseBeapT& Replace(const HeapIndex ind, const mPair& newItem)
-//     // when heap is empty or index is out of range behaviour is undefined
-//     {
-//         const size_t i = ind;
-//         _replace(i, newItem);
-//         return *this;
-//     }
-//
-//     const mPair& operator[](const HeapIndex ind) const
-//         // when heap is empty or index is out of range behaviour is undefined
-//     {
-//         return GetItem(ind);
-//     }
-//
-//     // ------------------------------
-//     // Printing methods
-//     // ------------------------------
-// private:
-//     [[nodiscard]] size_t _findMaxPrint() const{
-//         if (IsEmpty()) return 0;
-//         std::ostringstream str{};
-//
-//         str << std::get<0>(GetItem(1));
-//         size_t max = str.str().length();
-//         str = std::ostringstream{};
-//
-//         for (size_t i = 2; i < GetEndP(); ++i) {
-//             str << std::get<0>(GetItem(i));
-//             if (str.str().length() > max) {
-//                 max = str.str().length();
-//             }
-//
-//             str = std::ostringstream{};
-//         }
-//
-//         return max;
-//     }
+    [[nodiscard]] size_t MemSize() const {
+        return GetElemCount();
+    }
+
+    [[nodiscard]] size_t ElementsCount() const {
+        return GetEndP()-1;
+    }
+
+    [[nodiscard]] size_t GetLastIndex() const
+        // offset ready for HeapIndexClass
+    {
+        return GetEndP() - 2;
+    }
+
+    _baseBeapT& Insert(const mPair& pair) {
+        _insert(pair);
+        return *this;
+    }
+
+    [[nodiscard]] const mPair& Max() const
+        // when heap is empty behaviour is undefined
+    {
+        return GetItem(1);
+    }
+
+    _baseBeapT& DeleteMax(mPair& out)
+        // when heap is empty behaviour is undefined
+    {
+        out = GetItem(1);
+
+        _deleteMax();
+        return *this;
+    }
+
+    _baseBeapT& DeleteMax()
+        // when heap is empty behaviour is undefined
+    {
+        _deleteMax();
+        return *this;
+    }
+
+    [[nodiscard]] bool IsEmpty() const{
+        return GetEndP() == 1;
+    }
+
+    [[nodiscard]] HeapIndex Search(PrioT prio)
+        // when heap is empty behaviour is undefined
+        // Return: index of found element. Output can be invalid
+    {
+        HeapIndex ret{};
+        ret.index = _search(prio);
+        return ret;
+    }
+
+    _baseBeapT& Delete(const HeapIndex index, mPair& out)
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = index;
+        out = GetItem(i);
+        _delete(i);
+
+        return *this;
+    }
+
+    _baseBeapT& Delete(const HeapIndex index)
+    // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = index;
+        _delete(i);
+        return *this;
+    }
+
+    _baseBeapT& Replace(const HeapIndex ind, const mPair& newItem, mPair& oItem)
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = ind;
+        oItem = GetItem(i);
+        _replace(i, newItem);
+        return *this;
+    }
+
+    _baseBeapT& Replace(const HeapIndex ind, const mPair& newItem)
+    // when heap is empty or index is out of range behaviour is undefined
+    {
+        const size_t i = ind;
+        _replace(i, newItem);
+        return *this;
+    }
+
+    const mPair& operator[](const HeapIndex ind) const
+        // when heap is empty or index is out of range behaviour is undefined
+    {
+        return GetItem(ind);
+    }
+
+    // ------------------------------
+    // Printing methods
+    // ------------------------------
+private:
+    [[nodiscard]] size_t _findMaxPrint() const{
+        if (IsEmpty()) return 0;
+        std::ostringstream str{};
+
+        str << std::get<0>(GetItem(1));
+        size_t max = str.str().length();
+        str = std::ostringstream{};
+
+        for (size_t i = 2; i < GetEndP(); ++i) {
+            str << std::get<0>(GetItem(i));
+            if (str.str().length() > max) {
+                max = str.str().length();
+            }
+
+            str = std::ostringstream{};
+        }
+
+        return max;
+    }
 
 public:
     friend std::ostream& operator <<(std::ostream& out, const _baseBeapT& hp) {
@@ -230,6 +227,209 @@ public:
     // implementation-components
     // -------------------------------
 private:
+
+    void _createBeapFromDownToUp() {
+       for(size_t ind = _getPreLastRowLastElement(); ind >= 1; --ind) {
+           _downBeap(ind);
+       }
+    }
+
+    void _createBeapFromUpToDown(const mPair* const items, const size_t size) {
+        for(size_t i  = 0 ; i < size; ++i) {
+            _insert(items[i]);
+        }
+    }
+
+    size_t _search(PrioT prio) const{
+        return  _searchAct(prio);
+    }
+
+    size_t _searchN(PrioT prio) const{
+        /*
+         *              OTHER IMPLEMENTATION TYPE
+         *
+         */
+
+        size_t ind = GetEndP() - 1;
+        auto [row, col] = _getBeapPos(ind);
+        if (row != col) {
+            ind -= col;
+            row = col = row-1;
+        }
+
+        static auto leftBorderCleaning = [&] {
+            size_t lChild = ind + row;
+
+            const size_t range = GetEndP();
+            while(lChild < range) {
+
+            }
+            if (lChild >= GetEndP() || pred(prio, GetItem(lChild).first)) [[unlikely]]
+                // element not found we have no possible paths to go.
+            {
+                return 0;
+            }
+            ind = lChild;
+            ++row;
+        };
+
+        while(GetItem(ind).first != prio) {
+            if (col == 1)
+                // left parrent dont exists
+            {
+                leftBorderCleaning();
+            }
+        }
+
+        return ind;
+    }
+
+    size_t _searchAct(PrioT prio) const{
+        const size_t ep = GetEndP();
+        size_t ind = ep;
+        auto [row, col] = _getBeapPos(ind);
+        const size_t lowerRange = ind - col + 1;
+        if (row != col) {
+            ind -= col;
+            row = col = row-1;
+        }
+
+        while(ind != 0 && ind != lowerRange) {
+            if (pred(prio, GetItem(ind).first))
+                // we are bigger than currently chosen priority
+            {
+                if (col != 1)
+                    // otherwise there is no left parent
+                {
+                    ind -= row;
+                    --row; --col;
+                }
+                else return 0; // we cant go back
+            }
+            else if (pred(GetItem(ind).first, prio))
+                // we are smaller than currently chosen priority
+            {
+                if (const size_t lChild = ind + row; lChild < ep)
+                    // left child exists
+                {
+                    ind = lChild;
+                    ++row;
+                }
+                else
+                    // left child doesnt exists
+                {
+                    --col; --ind;
+                }
+            }
+            else return ind; // we are not bigger and not smalelr so equal
+        }
+
+        return 0; // came to dead end
+    }
+
+    void _replace(const size_t i, const mPair& item){
+        auto [row, col] = _getBeapPos(i);
+
+        if (size_t lChild = i + row; lChild < GetEndP())
+            // we are sure that at lest one child exists
+        {
+            if (size_t rChild = lChild + 1; rChild < GetEndP())
+                // both childrens exists
+            {
+                GetItem(i) = item;
+
+                // Any of childs has bigger priority
+                if (pred(GetItem(lChild).first, item.first) || pred(GetItem(rChild).first, item.first)) _downBeap(i);
+                else _upBeap(i);
+                return;
+            }
+
+            if (pred(GetItem(lChild).first, item.first))
+                // edge situation where we are at last - 1 row and our only child is last item in array.
+                // We just needt to swap them.
+            {
+                GetItem(i) = GetItem(lChild);
+                GetItem(lChild) = item;
+                return;
+            }
+        }
+
+        GetItem(i) = item;
+        _upBeap(i);
+    }
+
+    void _delete(size_t i) {
+        if (i == GetEndP()-1) [[unlikely]]{
+            RemoveLast();
+            return;
+        }
+
+        GetItem(i) = RemoveAndReturn();
+        _downBeap(i);
+    }
+
+    std::ostream& _print(std::ostream& out, const _baseBeapT& bp) const {
+        static auto printOffset = [&](const size_t off){
+            for (size_t z = 0; z < off; ++z) {
+                out << ' ';
+            }
+        };
+
+        if (bp.GetEndP() == 1) {
+            out << "[ Empty heap ]";
+            return out;
+        }
+
+        const size_t elemStringSize = bp._findMaxPrint(); // slow but needed
+        out << std::setw(elemStringSize) << std::setfill(' ');
+        const auto [lRow, lCol] = _getBeapPos(bp.GetEndP() - 1);
+        const size_t AllElements = bp.GetEndP() - 1;
+        const size_t height = lRow;
+        const size_t MaxLastRowElements = lRow;
+        const size_t beforeLastRowElements = AllElements - lCol;
+        const size_t LastRowElements = AllElements - beforeLastRowElements;
+        const size_t LastRowSpacing = PrintSpaceDist + elemStringSize;
+        const size_t LastLayerChars = MaxLastRowElements * elemStringSize + (MaxLastRowElements - 1) * LastRowSpacing;
+
+        size_t elemPerLayer = 1;
+        size_t prevLayers = 0;
+        for(size_t i = 1; i <= height-1; ++i) {
+            const size_t firstElemDist = std::floor((double)(LastLayerChars - elemPerLayer*elemStringSize) / (double)(elemPerLayer + 1));
+            const size_t interElemDist = elemPerLayer == 1 ? 0 :
+                std::floor((double)(LastLayerChars - elemPerLayer*elemStringSize - 2*firstElemDist) / (double)(elemPerLayer - 1));
+
+            printOffset(firstElemDist);
+
+            for(size_t j = 0; j < elemPerLayer; ++j) {
+                out << std::get<0>(bp.GetItem(prevLayers + 1 + j));
+                printOffset(interElemDist);
+            }
+
+            out << SpacingString;
+            prevLayers += elemPerLayer;
+            elemPerLayer++;
+        }
+
+        // cleaning last line
+        for(size_t j = 0; j < LastRowElements; ++j) {
+            out << std::get<0>(bp.GetItem(prevLayers + 1 + j));
+            printOffset(LastRowSpacing);
+        }
+        out << std::endl;
+        return out;
+    }
+
+    void _deleteMax() {
+        GetItem(1) = RemoveAndReturn();
+        _downBeap(1);
+    }
+
+    void _insert(const mPair& pair) {
+        const size_t ind = GetEndP();
+        AddLast(pair);
+        _upBeap(ind);
+    }
+
     void _upBeap(size_t index)
         // Basic simplest implementation
     {
@@ -266,7 +466,7 @@ private:
                 if (auto [lCord, rCord] = std::make_pair(index - row, index - row + 1); pred(GetItem(lCord).first, GetItem(rCord).first ))
                     // left parent is bigger, we swap with smaller one to preserve heap rule
                 {
-                    if (pred(elem.first, GetItem(rCord))) {
+                    if (pred(elem.first, GetItem(rCord).first)) {
                         GetItem(index) = GetItem(rCord);
                         index = rCord;
                         --row;
@@ -276,7 +476,7 @@ private:
                 else
                     // right is bigger, we swap with smaller one to preserve heap rule
                 {
-                    if (pred(elem.first, GetItem(lCord))) {
+                    if (pred(elem.first, GetItem(lCord).first)) {
                         GetItem(index) = GetItem(lCord);
                         index = lCord;
                         --row; --col;
@@ -298,10 +498,11 @@ private:
         auto [row, col] = _getBeapPos(index);
 
         size_t lChild = index + row;
-        while(lChild < GetEndP())
+        const size_t range = GetEndP();
+        while(lChild < range)
             // We check whether left child exists
         {
-            if (size_t rChild = lChild + 1; rChild < GetEndP() && rChild <= row + 1)
+            if (size_t rChild = lChild + 1; rChild < range)
                 // both childs exists
             {
                 if (pred(GetItem(rChild).first, GetItem(lChild).first))
@@ -315,7 +516,7 @@ private:
                     else break;
                 }
                 else
-                    // left child is bigger
+                    // left child is bigger or equal
                 {
                     if (pred(GetItem(lChild).first, elem.first)) {
                         GetItem(index) = GetItem(lChild);
@@ -335,9 +536,21 @@ private:
                 }
                 else break;
             }
+            lChild = index + row;
         }
 
         GetItem(index) = elem;
+    }
+
+    // Private constructor used only inside UpToDown factory.
+    explicit _baseBeapT(const size_t initSize): TArrayBasedStructure<mPair, IsMemSafe1>(initSize+1) {
+        // Ading Sentinel
+        AddLast(std::make_pair(MostSignificantPrio, ItemT()));
+    }
+
+    [[nodiscard]] constexpr size_t _getPreLastRowLastElement() const {
+        auto [lRow, lCol] = _getBeapPos(GetEndP() - 1);
+        return lRow == lCol ? (GetEndP() - 1) : (GetEndP() - 1) - lCol;
     }
 
     static constexpr size_t _getRowPos(const size_t ind) {
