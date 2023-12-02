@@ -12,16 +12,14 @@
 #include "_baseLeftistHeapT.h"
 #include "heapTesters.h"
 
-static constexpr bool displayBeap = false;
+static constexpr bool displayBeap = true;
 static constexpr bool displayHeap = false;
-static constexpr bool displayLeftistHeap = true;
+static constexpr bool displayLeftistHeap = false;
 
 inline int HeapsMain()
 {
     if constexpr (displayLeftistHeap) {
-        _baseLeftistHeapT<size_t, size_t, std::greater<>>::TestNode();
-
-        MergingHeapTest();
+        MergingHeapTest<_baseLeftistHeapT>();
     }
 
     if constexpr (displayBeap) {

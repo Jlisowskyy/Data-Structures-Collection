@@ -22,13 +22,15 @@ public:
 
     _baseLeftistHeapT(const mPair* const pairs, const size_t size): _elemCounter{ size }{
         for (int i = 0; i < size; ++i) {
-            _insert(pairs[i]);
+            auto n = new node{pairs[i]};
+            _insert(n);
         }
     }
 
     _baseLeftistHeapT(const PrioT* const prios, const ItemT* const items, const size_t size): _elemCounter{ size }{
         for (int i = 0; i < size; ++i) {
-            _insert(prios[i], items[i]);
+            auto n = new node{prios[i], items[i]};
+            _insert(n);
         }
     }
 
@@ -85,14 +87,13 @@ public:
         return *this;
     }
 
-    // TODO
-    // _baseLeftistHeapT& Insert(mPair)
-    // {
-    //     auto n = new node{prio, item};
-    //     _insert(n);
-    //     ++_elemCounter;
-    //     return *this;
-    // }
+    _baseLeftistHeapT& Insert(const mPair& pair)
+    {
+        auto n = new node{pair};
+        _insert(n);
+        ++_elemCounter;
+        return *this;
+    }
 
     _baseLeftistHeapT& Max(mPair& out) const
         // when tree is empty behaviour is undefined
@@ -149,6 +150,9 @@ public:
         _root = _merge(_root, other._root);
         _elemCounter += other._elemCounter;
 
+        other._root = nullptr;
+        other._elemCounter = 0;
+
         return *this;
     }
 
@@ -168,6 +172,12 @@ public:
 
         ret._root = _merge(a._root, b._root);
         ret._elemCounter = a._elemCounter + b._elemCounter;
+
+        a._root = nullptr;
+        a._elemCounter = 0;
+
+        b._root = nullptr;
+        b._elemCounter = 0;
 
         return ret;
     }
@@ -227,11 +237,10 @@ public:
     // TODO: UPDATE KEY
     // template<class PriorityUpdateFunction>
 
-    std::ostream& operator<<(std::ostream& out, const _baseLeftistHeapT& tree) {
-        auto printParams = tree._findPrintParams();
-        out << std::setw(printParams.second);
+    friend std::ostream& operator<<(std::ostream& out, const _baseLeftistHeapT& tree) {
+        auto printParams = _findPrintParams(tree._root);
 
-        _printRecu(out, _root, 0);
+        _printRecu(out, tree._root, 0, printParams.second);
         return out;
     }
 
@@ -240,31 +249,35 @@ public:
     // -------------------------------
 private:
 
+    // TODO: problem with npl - not working
     void _delete(node** tree) {
         node* nSubTree = _merge((*tree)->left, (*tree)->right);
         delete *tree;
         *tree = nSubTree;
     }
 
-    void _replace(node** tree, node** n) {
+    // TODO: problem with npl should be updated upper - not working
+    void _replace(node** tree, node* n) {
         node* nSubTree = _merge((*tree)->left, n);
         nSubTree = _merge((*tree)->right, nSubTree);
         delete *tree;
         *tree = nSubTree;
     }
 
-    static void _printRecu(std::ostream& out, const node* tree, const size_t offset) {
-        static auto PrintContent = [&] {
-            for(int i = 0; i < offset; ++i)
-                out << SpacingStep;
-            out << *tree;
-        };
-
+    static void _printRecu(std::ostream& out, const node* tree, const size_t offset, const size_t printSize) {
         if (!tree) return;
 
-        _printRecu(out, tree->left, offset+1);
-        PrintContent();
-        _printRecu(out, tree->right, offset+1);
+        _printRecu(out, tree->left, offset+1, printSize);
+
+        for(int i = 0; i < offset; ++i) {
+            out << SpacingStep;
+            out << std::string(printSize, ' ');
+        }
+
+        out << std::setw(printSize) << *tree << std::endl;;
+        out << SpacingString;
+
+        _printRecu(out, tree->right, offset+1, printSize);
     }
 
     void _print(std::ostream& out) const{
@@ -281,8 +294,8 @@ private:
         std::ostringstream str{};
         str << *nd;
         size_t max = str.str().length();
-        const auto [lHeight, lMax] = _findMaxPrint(nd->left);
-        const auto [rHeight, rMax] = _findMaxPrint(nd->right);
+        const auto [lHeight, lMax] = _findPrintParams(nd->left);
+        const auto [rHeight, rMax] = _findPrintParams(nd->right);
 
         if (lMax > max) max = lMax;
         if (rMax > max) max = rMax;
@@ -290,14 +303,15 @@ private:
         return {lHeight > rHeight ? lHeight + 1 : rHeight + 1, max};
     }
 
-    static node** _search(const node** n, PrioT prio)
+    static node** _search(node** n, PrioT prio)
         // when n is a nullptr behaviour is undefined
     {
+        static PriorityFunction _pred;
         if (!*n) return nullptr;
 
         if (_pred(prio, (*n)->content.first)) return nullptr;
         if (_pred((*n)->content.first, prio)) {
-            node* res = _search(&(*n)->left, prio);
+            node** res = _search(&(*n)->left, prio);
 
             if (res == nullptr) res = _search(&(*n)->right, prio);
             return res;
@@ -306,7 +320,8 @@ private:
     }
 
     // TODO: CAN BE A LOT FASTER
-    static node* _search(const node* n, PrioT prio) {
+    static node* _search(node* n, PrioT prio) {
+        static PriorityFunction _pred;
         if (!n) return nullptr;
 
         if (_pred(prio, n->content.first)) return nullptr;
@@ -398,16 +413,15 @@ private:
     // ------------------------------
 
     struct node {
-        node() = default;
         node(const PrioT& nPrio, const ItemT& nItem, const size_t nNpl = 0, node* nLeft = nullptr, node* nRight = nullptr):
             content{ nPrio, nItem }, left{ nLeft }, right{ nRight }, npl{ nNpl }{}
         explicit node(const mPair& pair, const size_t nNpl = 0, node* nLeft = nullptr, node* nRight = nullptr):
             content{ pair }, left{ nLeft }, right{ nRight }, npl{ nNpl }{}
+        node() = default;
 
         std::pair<PrioT, ItemT> content;
         node* left;
         node* right;
-
         size_t npl; // practiacally there could be int32
 
         mPair CloneContent() const {
@@ -426,6 +440,7 @@ private:
         }
 
         friend bool operator==(const node& nd, const PrioT& prio){
+            static PriorityFunction _pred;
             return !_pred(nd.content.first, prio) && !_pred(prio, nd.content.first);
         }
 
@@ -441,11 +456,11 @@ private:
 
     node* _root = nullptr;
     size_t _elemCounter = 0;
-    static PriorityFunction _pred;
+    PriorityFunction _pred;
 
-    inline static unsigned int PrintRecuOffsetStep = 5;
+    inline static unsigned int PrintRecuOffsetStep = 2;
     inline static std::string SpacingStep = std::string(PrintRecuOffsetStep, ' ');
-    inline static unsigned int PrintSpaceDist = 3;
+    inline static unsigned int PrintSpaceDist = 0;
     inline static std::string SpacingString = std::string(PrintSpaceDist, '\n');
 };
 
