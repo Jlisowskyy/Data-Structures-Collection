@@ -9,6 +9,11 @@
 
 #include <iostream>
 
+/*          TODO:
+ *  - Efficient tree building
+ *
+ */
+
 template<typename PrioT, typename ItemT, class PriorityFunction>
 class _baseLeftistHeapT{
     struct node; // defined below
@@ -456,7 +461,7 @@ private:
 
     node* _root = nullptr;
     size_t _elemCounter = 0;
-    PriorityFunction _pred;
+    PriorityFunction _pred{};
 
     inline static unsigned int PrintRecuOffsetStep = 2;
     inline static std::string SpacingStep = std::string(PrintRecuOffsetStep, ' ');
