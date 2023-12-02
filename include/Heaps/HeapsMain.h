@@ -5,8 +5,11 @@
 #ifndef MINI_PROJECTS_HEAPSMAIN_H
 #define MINI_PROJECTS_HEAPSMAIN_H
 
+#include <functional>
+
 #include "_baseBeapT.h"
 #include "_baseHeapT.h"
+#include "_baseLeftistHeapT.h"
 #include "heapTesters.h"
 
 static constexpr bool displayBeap = false;
@@ -16,6 +19,8 @@ static constexpr bool displayLeftistHeap = true;
 inline int HeapsMain()
 {
     if constexpr (displayLeftistHeap) {
+        _baseLeftistHeapT<size_t, size_t, std::greater<>>::TestNode();
+
         MergingHeapTest();
     }
 
