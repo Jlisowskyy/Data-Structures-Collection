@@ -7,7 +7,11 @@
 
 #define DEBUG_ // TODO: TEMPRORARY
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 /*          TODO:
  *  - Efficient tree building
@@ -257,6 +261,125 @@ public:
         return _getMaxNode()->content;
     }
 
+    static size_t _getMaxStringSize(node* tree)
+    {
+        if (tree == nullptr) return 0;
+
+        size_t max = 0;
+        do {
+            std::ostringstream str{};
+            str << *tree;
+
+            if (const size_t nMax = str.str().length(); nMax > max) max = nMax;
+            if (const size_t chldMax = _getMaxStringSize(tree->child); chldMax > max) max = chldMax;
+        }while((tree = tree->next));
+
+        return max;
+    }
+
+    struct _printInfo {
+        std::string emptyFieldString;
+        std::string horizontalConnectionString;
+        std::string verticalConnectionString;
+        size_t maxStringSize;
+        size_t maxDepth;
+    };
+
+    using sVect = std::vector<std::string>;
+    using pVect = std::vector<sVect>;
+    static void _print(std::ostream& out, node* list)
+    {
+        if (list == nullptr) {
+            out << "[ Empty tree ]";
+            return;
+        }
+
+        _printInfo info {
+            .maxDepth = 2*(list->prev->height + 1),
+            .maxStringSize = _getMaxStringSize(list)
+        };
+
+        // to make printing prettier ~~ perfectly aligned
+        if (info.maxStringSize % 2 != 0) ++info.maxStringSize;
+
+        info.emptyFieldString = std::string(info.maxStringSize, ' ');
+        info.horizontalConnectionString = std::string(info.maxStringSize, '-');
+        info.verticalConnectionString = std::string(info.maxStringSize, ' ');
+        info.verticalConnectionString[info.maxStringSize / 2] = '|';
+
+        const pVect pages = _genTreePrintRecu(list, info);
+
+        for(size_t j = 0; j < info.maxDepth; ++j) {
+            for (size_t i = 0; i < pages.size(); ++i) {
+                out << pages[i][j];
+            }
+        }
+    }
+
+    static pVect _genTreePrintVect(node* tree, const _printInfo& info) {
+
+        return {};
+    }
+
+    static pVect _genTreePrintRecu(node* tree, const _printInfo& info) {
+        if (tree == nullptr) {
+            pVect v;
+            v.push_back(sVect{});
+
+            for(size_t i = 0; i < info.maxDepth; ++i) v[0].push_back(info.emptyFieldString);
+            return v;
+        };
+
+        _printInfo mInfo = info;
+        mInfo.maxDepth -= 2;
+
+        // Generating separator;
+        sVect separator{};
+        separator.push_back(info.horizontalConnectionString);
+        for(size_t i = 1; i < info.maxDepth; ++i) {
+            separator.push_back(info.emptyFieldString);
+        }
+
+        pVect subMatrix{};
+        do {
+            pVect subResult = _genTreePrintRecu(tree->child,  mInfo);
+
+            // preparing first line
+            sVect firstLine{};
+
+            firstLine.push_back(tree->ToString(info.maxStringSize, ' '));
+
+            if (!tree->child)
+                firstLine.push_back(info.emptyFieldString);
+            else
+                firstLine.push_back(info.verticalConnectionString);
+            firstLine.insert(firstLine.end(), subResult.begin(), subResult.end());
+            subMatrix.push_back(firstLine);
+
+            // adding other lines
+            for(size_t i = 1; i < subResult.size(); ++i) {
+                sVect line{};
+
+                // correcting last element on list
+                if (tree->next) {
+                    line.push_back(info.horizontalConnectionString);
+                    line.push_back(info.emptyFieldString);
+                }
+                else {
+                    line.push_back(info.emptyFieldString);
+                    line.push_back(info.emptyFieldString);
+                }
+
+                line.insert(line.end(), subResult[i].begin(), subResult[i].end());
+                subMatrix.push_back(line);
+            }
+
+            if (tree->next) subMatrix.push_back(separator);
+        }while((tree = tree->next));
+
+        return subMatrix;
+    }
+
     node* _getMaxNode() const
         // When _root is nullptr behaviour is undefined.
         // Returns pointer to Maximal node on the queue,
@@ -305,6 +428,17 @@ public:
     }
 
     static node* _searchTreeList(node* list, PrioT prio) {
+        if (list == nullptr) return nullptr;
+
+        do {
+            if (*list > prio)
+                if (node* res = _searchTreeList(list->child, prio); res != nullptr) {
+                    return res;
+                }
+
+            if (!(prio > *list)) return list;
+
+        }while ((list = list->next));
 
         return nullptr;
     }
@@ -341,9 +475,52 @@ public:
 
         return t;
     }
-    
 
     static node* _mergeListRecu(node* l1, node* l2) {
+        static auto _mergeFirstHigher = [](node* lHigher, node* lLower) {
+            node* n1 = _extract(&lLower);
+            node* l3 = _mergeListRecu(lHigher, lLower);
+
+            // repairing connections
+            n1->next = l3;
+            n1->prev = l3->prev;
+            l3.prev = n1;
+
+            return l3;
+        };
+
+        // ------------------------------
+        // Function code
+        // ------------------------------
+
+        if (!l1) return l2;
+        if (!l2) return l1;
+
+
+        if (l1->height > l2->height)
+            // if head of l2 has smaller height we need to extract it first to preserve growing heights in queue
+        {
+            return _mergeFirstHigher(l1, l2);
+        }
+
+        if (l2->height > l1->height)
+            // if head of l1 has smaller height we need to extract it first to preserve growing heights in queue
+        {
+            return _mergeFirstHigher(l2, l1);
+        }
+
+        // neither of them has bigger height so they are equal - no need to check
+        node* n1 = _extract(&l1);
+        node* n2 = _extract(&l2);
+        node* nTree = _mergeTree(n1, n2);
+        node* l3 = _mergeListRecu(l1, l2);
+        l3 = _mergeListRecu(l3, nTree);
+
+        return l3;
+    }
+
+    static node* _mergeListNonRecu(node* l1, node* l2) {
+        // TODO: IMPLEMENT
 
         return nullptr;
     }
@@ -353,12 +530,35 @@ public:
     }
 
     static node* _copyList(node* list) {
+        if (list == nullptr) return nullptr;
 
-        return nullptr;
+        node* tail = list->Clone();
+        tail->child = _copyList(list->child);
+        node* head = tail;
+
+        while((list = list->next)) {
+            tail->next = list->Clone();
+            tail->next->prev = tail;
+            tail = tail->next;
+            tail->child = _copyList(list->child);
+        }
+
+        head->prev = tail;
+        tail->next = nullptr;
+
+        return head;
     }
 
-    static void _cleanList(node* list) {
+    static void _cleanList(node* list)
+    {
+        if (list == nullptr) return;
+        node* readyToRemove = nullptr;
 
+        do {
+            delete readyToRemove;
+            _cleanList(list->child);
+            readyToRemove = list;
+        }while ((list = list->next));
     }
 
     // -----------------------------------
@@ -392,9 +592,25 @@ public:
             return new node(content.first, content.second);
         }
 
+        std::string ToString(size_t minSize, char fill) {
+            std::ostringstream str{};
+            str << std::setw(minSize) << std::setfill(fill) << content.first;
+            return str.str();
+        }
+
         friend bool operator>(const node& a, const node& b) {
             static PriorityFunction _pred;
             return _pred(a.content.first, b.content.first);
+        }
+
+        friend bool operator>(const node& a, const PrioT& prio) {
+            static PriorityFunction _pred;
+            return _pred(a.content.first, prio);
+        }
+
+        friend bool operator>(const PrioT& prio, const node& b) {
+            static PriorityFunction _pred;
+            return _pred(prio, b.content.first);
         }
 
         friend bool operator==(const node& nd, const PrioT& prio){
