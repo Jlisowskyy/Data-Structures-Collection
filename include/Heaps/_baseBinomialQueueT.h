@@ -244,16 +244,19 @@ public:
     // TODO: UPDATE KEY
     // template<class PriorityUpdateFunction>
 
-    // friend std::ostream& operator<<(std::ostream& out, const _baseLeftistHeapT& tree) {
-    //     auto printParams = _findPrintParams(tree._root);
-    //
-    //     _printRecu(out, tree._root, 0, printParams.second);
-    //     return out;
-    // }
+    friend std::ostream& operator<<(std::ostream& out, const _baseBinominialQueue& tree) {
+        _print(out, tree._root);
+        return out;
+    }
 
     // -------------------------------
     // implementation components
     // -------------------------------
+private:
+
+    void _insert(node* nd) {
+        _root = _mergeList(_root, nd);
+    }
 
     mPair& _getMax() const
         // When _root is nullptr behaciour is undefined.
@@ -278,11 +281,12 @@ public:
     }
 
     struct _printInfo {
+        _printInfo() = default;
         std::string emptyFieldString;
         std::string horizontalConnectionString;
         std::string verticalConnectionString;
-        size_t maxStringSize;
-        size_t maxDepth;
+        size_t maxStringSize {};
+        size_t maxDepth {};
     };
 
     using sVect = std::vector<std::string>;
@@ -294,10 +298,9 @@ public:
             return;
         }
 
-        _printInfo info {
-            .maxDepth = 2*(list->prev->height + 1),
-            .maxStringSize = _getMaxStringSize(list)
-        };
+        _printInfo info{};
+        info.maxDepth = 2*(list->prev->height + 1);
+        info.maxStringSize = _getMaxStringSize(list);
 
         // to make printing prettier ~~ perfectly aligned
         if (info.maxStringSize % 2 != 0) ++info.maxStringSize;
@@ -310,9 +313,10 @@ public:
         const pVect pages = _genTreePrintRecu(list, info);
 
         for(size_t j = 0; j < info.maxDepth; ++j) {
-            for (size_t i = 0; i < pages.size(); ++i) {
-                out << pages[i][j];
+            for (const auto & page : pages) {
+                out << page[j];
             }
+            out << std::endl;
         }
     }
 
@@ -324,7 +328,7 @@ public:
     static pVect _genTreePrintRecu(node* tree, const _printInfo& info) {
         if (tree == nullptr) {
             pVect v;
-            v.push_back(sVect{});
+            v.emplace_back();
 
             for(size_t i = 0; i < info.maxDepth; ++i) v[0].push_back(info.emptyFieldString);
             return v;
@@ -353,7 +357,7 @@ public:
                 firstLine.push_back(info.emptyFieldString);
             else
                 firstLine.push_back(info.verticalConnectionString);
-            firstLine.insert(firstLine.end(), subResult.begin(), subResult.end());
+            firstLine.insert(firstLine.end(), subResult[0].begin(), subResult[0].end());
             subMatrix.push_back(firstLine);
 
             // adding other lines
@@ -446,7 +450,11 @@ public:
     static node* _mergeTree(node* t1, node* t2)
         // t1->h == t2->h
     {
-        if (*t2 > *t1) std::swap(t1, t2);
+        if (*t2 > *t1){
+            node* temp = t2;
+            t2 = t1;
+            t1 = temp;
+        }
 
         if (t1->height == 0) {
             t1->child = t2;
@@ -457,17 +465,16 @@ public:
             t1->child->prev = t2;
         }
 
-        ++t1->height;
+        ++(t1->height);
         return t1;
     }
 
     static node* _extract(node** head) {
-        if (!*head) return nullptr;
         node* t = *head;
+        *head = (*head)->next;
 
         if (t->next) {
             t->next->prev = t->prev;
-            *head = t->next;
         }
 
         t->prev = t;
@@ -484,9 +491,9 @@ public:
             // repairing connections
             n1->next = l3;
             n1->prev = l3->prev;
-            l3.prev = n1;
+            l3->prev = n1;
 
-            return l3;
+            return n1;
         };
 
         // ------------------------------
@@ -495,7 +502,6 @@ public:
 
         if (!l1) return l2;
         if (!l2) return l1;
-
 
         if (l1->height > l2->height)
             // if head of l2 has smaller height we need to extract it first to preserve growing heights in queue
@@ -514,9 +520,7 @@ public:
         node* n2 = _extract(&l2);
         node* nTree = _mergeTree(n1, n2);
         node* l3 = _mergeListRecu(l1, l2);
-        l3 = _mergeListRecu(l3, nTree);
-
-        return l3;
+        return  _mergeListRecu(l3, nTree);
     }
 
     static node* _mergeListNonRecu(node* l1, node* l2) {
