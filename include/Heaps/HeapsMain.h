@@ -26,7 +26,7 @@ inline int HeapsMain()
         using Binomial = _baseBinominialQueue<size_t, size_t, std::greater<>>;
         Binomial tester{};
 
-        static constexpr size_t range = 13 + 1;
+        static constexpr size_t range = (1<<5) + 1;
         for(size_t i = 1; i < range; ++i) {
             tester.Insert(i, i);
         }
