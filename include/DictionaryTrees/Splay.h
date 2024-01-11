@@ -6,15 +6,13 @@
 #define SPLAY_H
 
 #include <cstdlib>
-#include <string>
 #include <utility>
-#include <sstream>
-#include <iostream>
 
-#include "_AVLcore.h"
+#include "_SplayCore.h"
+#include "../bTreeHelpers.h"
 
 template<
-    class prioT,
+    class keyT,
     class itemT,
     class predT
 > class SplayTree {
@@ -22,9 +20,9 @@ template<
     // Class inner types
     // ------------------------------
 
-    using mPair = std::pair<prioT, itemT>;
-    struct node;
-    using AVLCore = _AVLCore<node>;
+    using mPair = std::pair<keyT, itemT>;
+    using node = basicNode<keyT, itemT, predT>;
+    using SplayCore = _SplayCore<keyT, node>;
 
     // ------------------------------
     // Class creation
@@ -33,7 +31,7 @@ public:
 
     SplayTree() = default;
 
-    template<typename indexableT>
+    template<class indexableT>
     SplayTree(const indexableT& indexableContainer, const size_t size) {
         for (size_t i = 0; i < size; ++i)
             Add(indexableContainer[i]);
@@ -45,17 +43,41 @@ public:
         }
     }
 
+    SplayTree(const SplayTree& other): _root{CloneTree(other._root)} {}
+    SplayTree(SplayTree&& other) noexcept: _root{other._root} {
+        other._root = nullptr;
+    }
+
+    SplayTree& operator=(const SplayTree& other) {
+        if (this == &other) return *this;
+
+        CleanTree(_root);
+        _root = CloneTree(other._root);
+
+        return *this;
+    }
+
+    SplayTree& operator=(SplayTree&& other)  noexcept {
+        if (this == &other) return *this;
+
+        CleanTree(_root);
+        _root = other._root;
+        other._root = nullptr;
+
+        return *this;
+    }
+
     ~SplayTree() {
-        _cleanTree(_root);
+        CleanTree(_root);
     }
 
     // ------------------------------
     // Class public methods
     // ------------------------------
 
-    void Add(const prioT& prio, const itemT& item) {
-        if (!_root) _root = new node(std::make_pair(prio, item));
-        else _insert(std::make_pair(prio, item));
+    void Add(const keyT& key, const itemT& item) {
+        if (!_root) _root = new node(std::make_pair(key, item));
+        else _insert(std::make_pair(key, item));
     }
 
     void Add(const mPair&  pair) {
@@ -63,14 +85,14 @@ public:
         else _insert(pair);
     }
 
-    bool Contains(const prioT& prio) {
+    [[nodiscard]] bool Contains(const keyT& key) {
         if (!_root) return false;
-        _splay(prio, _root);
+        SplayCore::splay(key, _root);
 
-        return prio == *_root ? true : false;
+        return key == *_root ? true : false;
     }
 
-    bool IsEmpty() const { return _root != nullptr; }
+    [[nodiscard]] bool IsEmpty() const { return _root != nullptr; }
 
     // Should only be invoked after Contains returned true or we checked that structure is not empty
     itemT& GetLastSearched() {
@@ -82,12 +104,12 @@ public:
         return _root->content.second;
     }
 
-    bool Delete(const prioT& prio) {
-        return _root == nullptr ? false : _delete(prio);
+    bool Delete(const keyT& key) {
+        return _root == nullptr ? false : _delete(key);
     }
 
     void Print() const {
-        _printTree(_root, 0);
+        SimplestRecursivePrint(_root, 0);
     }
 
     // ------------------------------
@@ -96,17 +118,17 @@ public:
 private:
 
     // TODO: comments
-    bool _delete(const prioT& prio) {
-        _splay(prio, _root);
+    bool _delete(const keyT& key) {
+        SplayCore::splay(key, _root);
 
-        if (prio != *_root) return false;
+        if (key != *_root) return false;
         const node* n = _root;
 
         if (!_root->left) {
             _root = _root->right;
         }
         else {
-            _splay(prio, _root->left);
+            SplayCore::splay(key, _root->left);
             _root->left->right = _root->right;
             _root = _root->left;
         }
@@ -117,7 +139,7 @@ private:
 
     void _insert(const mPair& pair) {
         // Structure reconstruction
-        _splay(pair.first, _root);
+        SplayCore::splay(pair.first, _root);
 
         if (pair.first > *_root)
             // old root pushed into left subtree
@@ -146,194 +168,6 @@ private:
             _root = n;
         }
     }
-
-    static void _LZig(node*& n) {
-        AVLCore::LL(n);
-    }
-
-    static void _LZigZig(node*& n) {
-        AVLCore::LL(n);
-        AVLCore::LL(n);
-    }
-
-    static void _LZigZag(node*& n) {
-        AVLCore::LR(n);
-    }
-
-    static void _RZig(node*& n) {
-        AVLCore::RR(n);
-    }
-
-    static void _RZigZig(node*& n) {
-        AVLCore::RR(n);
-        AVLCore::RR(n);
-    }
-
-    static void _RZigZag(node*& n) {
-        AVLCore::RL(n);
-    }
-
-    static void _splay(const prioT prio, node* root) {
-
-        // elements of interest should be on the left side
-        if (*root > prio) {
-
-            // empty branch
-            if (!root->left) return;
-
-            if (*root->left > prio)
-                // deeper left side
-            {
-                if (root->left->left)
-                    // if exists process depth two rotation
-                {
-                    _splay(prio, root->left->left);
-                    _LZigZig(root);
-                }
-                else
-                    // if not process depth one rotation
-                    _LZig(root);
-            }
-            else if (prio > *root->left)
-                // deeper right side
-            {
-                if (root->left->right)
-                    // if exists process depth two rotation
-                {
-                    _splay(prio, root->left->right);
-                    _LZigZag(root);
-                }
-                else
-                    // if not process depth one rotation
-                    _LZig(root);
-            }
-            else
-                // we found our element roll back
-                _LZig(root);
-
-        }
-        // elements of interest should be on the right side
-        else if (prio > *root) {
-
-            // empty branch abandon work
-            if (!root->right) return;
-
-            if (*root->right > prio)
-                // deeper left side
-            {
-                if (root->right->left)
-                    // if exists process depth two rotation
-                {
-                    _splay(prio, root->right->left);
-                    _RZigZag(root);
-                }
-                else
-                    // if not process depth one rotation
-                    _RZig(root);
-            }
-            else if (prio > *root->right)
-                // deeper right side
-            {
-                if (root->right->right)
-                    // if exists process depth two rotation
-                {
-                    _splay(prio, root->right->right);
-                    _RZigZig(root);
-                }
-                else
-                    // if not process depth one rotation
-                    _RZig(root);
-            }
-            else
-                // we found our element roll back
-                _RZig(root);
-        }
-    }
-
-    static void _cleanTree(node* n) {
-        if (!n) return;
-
-        _cleanTree(n->left);
-        _cleanTree(n->right);
-
-        delete n;
-    }
-
-    static size_t _findLargestPrintsize(node* n) {
-        if (!n) return 0;
-
-        const size_t lSize = _findLargestPrintsize(n->left);
-        const size_t rSize = _findLargestPrintsize(n->right);
-
-        std::ostringstream str{};
-        str << n->content.first;
-
-        // chosing maximal size
-        return std::max(str.str().length(), std::max(lSize, rSize));
-    }
-
-    static void _printTree(node* n, const int depth) {
-        if (!n) return;
-
-        _printTree(n->left, depth + 4);
-        std::cout << std::string(depth, ' ') << n->content.first << std::endl;
-        _printTree(n->right, depth + 4);
-    }
-
-    // ----------------------------------
-    // innter types implementations
-    // ----------------------------------
-
-    struct node {
-        mPair content;
-
-        node* left{};
-        node* right{};
-
-        node() = default;
-        node(const mPair& pair): content{pair} {}
-        node(const itemT& nItem, const prioT& nPrio): content{nItem, nPrio} {}
-        ~node() = default;
-
-        friend bool operator>(const node& a, const node& b) {
-            return pred(a.content.first, b.content.first);
-        }
-
-        friend bool operator>(const node& a, const prioT& b) {
-            return pred(a.content.first, b);
-        }
-
-        friend bool operator>(const prioT& a, const node& b) {
-            return pred(a, b.content.first);
-        }
-
-        friend bool operator==(const node& a, const node& b){
-            return !(a > b || b > a);
-        }
-
-        friend bool operator==(const prioT& a, const node& b) {
-            return !(a > b || b > a);
-        }
-
-        friend bool operator==(const node& a, const prioT& b) {
-            return !(a > b || b > a);
-        }
-
-        friend bool operator!=(const node& a, const node& b){
-            return !(a==b);
-        }
-
-        friend bool operator!=(const prioT& a, const node& b) {
-            return !(a==b);
-        }
-
-        friend bool operator!=(const node& a, const prioT& b) {
-            return !(a==b);
-        }
-
-    private:
-        static constexpr predT pred{};
-    };
 
     // ------------------------------
     // Class fields
