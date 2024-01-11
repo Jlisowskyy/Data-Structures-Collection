@@ -95,12 +95,12 @@ public:
     [[nodiscard]] bool IsEmpty() const { return _root != nullptr; }
 
     // Should only be invoked after Contains returned true or we checked that structure is not empty
-    itemT& GetLastSearched() {
+    [[nodiscard]] itemT& GetLastSearched() {
         return _root->content.second;
     }
 
     // Should only be invoked after Contains returned true or we checked that structure is not empty
-    const itemT& GetLastSearched() const {
+    [[nodiscard]] const itemT& GetLastSearched() const {
         return _root->content.second;
     }
 
@@ -109,7 +109,9 @@ public:
     }
 
     void Print() const {
-        SimplestRecursivePrint(_root, 0);
+        // SimplestRecursivePrint(_root, 0);
+        // TestQueuePrint(_root);
+        PrettyBTreePrinter<node>::PrintWithQueue(std::cout, _root);
     }
 
     // ------------------------------

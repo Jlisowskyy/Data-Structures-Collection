@@ -16,7 +16,7 @@ inline int dTreeMain() {
         using mSplay = SplayTree<int, int, std::greater<>>;
 
         mSplay tree{};
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 9; ++i)
             tree.Add(i+1, i);
 
         std::cout << "Simple 10-element sequence input\n";
