@@ -15,8 +15,8 @@
 
 static constexpr bool displayBeap = false;
 static constexpr bool displayHeap = false;
-static constexpr bool displayLeftistHeap = false;
-static constexpr bool displayBinomialQueue = true;
+static constexpr bool displayLeftistHeap = true;
+static constexpr bool displayBinomialQueue = false;
 
 inline int HeapsMain()
 {
