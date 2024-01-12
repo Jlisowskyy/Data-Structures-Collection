@@ -164,9 +164,9 @@ public:
         }
 
         const size_t largestPrint = FindlargestPrintSize(root);
-        const size_t maxDepth = FindTreeDepth(root, 0);
+        const size_t maxDepth = FindTreeDepth(root, -1);
         const size_t myhorizontalSpacing = std::max(horizontalSpacing, largestPrint);
-        const double lowestRowSize = (1 << maxDepth) * largestPrint + ((1 << maxDepth) - 1) * myhorizontalSpacing;
+        const size_t lowestRowSize = (1 << maxDepth) * largestPrint + ((1 << maxDepth) - 1) * myhorizontalSpacing;
         const std::string emptySpaceStr(largestPrint, ' ');
         const std::string verSpaceStr(verticalSpacing, '\n');
 
@@ -177,7 +177,13 @@ public:
             const size_t layerElemCount = 1 << i;
             const double layerDivider = 1 << (i + 1);
             const size_t leftOffset = ((double)(lowestRowSize - layerElemCount*largestPrint)) / layerDivider;
-            const std::string horOffsetStr(leftOffset, ' ');
+
+            // setting up left offset
+            out << std::string(leftOffset, ' ');
+
+            const size_t layerSpace = lowestRowSize - 2 * leftOffset;
+            const size_t interSpace = layerElemCount == 1 ? 0 : (layerSpace - layerElemCount*largestPrint) / (layerElemCount - 1);
+            const std::string interSpaceStr(interSpace, ' ');
 
             size_t expectedRowIndex = 0;
             while(!que.empty() && que.top().depth == i) {
@@ -185,28 +191,29 @@ public:
                 que.pop();
 
                 while(expectedRowIndex != elem.rowInd) {
-                    out << horOffsetStr << emptySpaceStr;
+                    out << emptySpaceStr << interSpaceStr;
                     ++expectedRowIndex;
                 }
 
-                out << horOffsetStr << std::setw(largestPrint) << *elem.node;
+                out << std::setw(largestPrint) << *elem.node << interSpaceStr;
+                ++expectedRowIndex;
             }
 
             out << std::endl << verSpaceStr;
         }
 
-        const std::string horizontalSpacingStr(myhorizontalSpacing, ' ');
         size_t expectedRowIndex = 0;
+        const size_t LastRowSpaces = lowestRowSize - (1 << maxDepth) * largestPrint;
+        const double singleSpace = LastRowSpaces / ((1 << maxDepth) - 1);
+
         while(!que.empty()) {
             auto elem = que.top();
             que.pop();
 
-            while(expectedRowIndex != elem.rowInd) {
-                out << horizontalSpacingStr << emptySpaceStr;
-                ++expectedRowIndex;
-            }
+            const size_t dist = elem.rowInd - expectedRowIndex;
+            expectedRowIndex = elem.rowInd + 1;
 
-            out << horizontalSpacingStr << std::setw(largestPrint) << *elem.node;
+            out << std::string(dist * singleSpace + dist * largestPrint , ' ') << std::setw(largestPrint) << *elem.node << std::string(myhorizontalSpacing, ' ');
         }
 
         return out;
@@ -225,7 +232,7 @@ public:
         return std::max(str.str().length(), std::max(lSize, rSize));
     }
 
-    static size_t FindTreeDepth(const nodeT* const n, const size_t depth) {
+    static size_t FindTreeDepth(const nodeT* const n, const int depth) {
         if (!n) return depth;
 
         const size_t lDepth = FindTreeDepth(n->left, depth + 1);
@@ -270,8 +277,8 @@ private:
     // Class private fields
     // ------------------------------
 
-    inline static size_t verticalSpacing = 4;
-    inline static size_t horizontalSpacing = 1;
+    inline static size_t verticalSpacing = 2;
+    inline static size_t horizontalSpacing = 2;
 };
 
 #endif //BTREEHELPERS_H
