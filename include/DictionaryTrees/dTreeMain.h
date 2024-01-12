@@ -13,18 +13,18 @@ inline int dTreeMain() {
     if constexpr (displaySplayTree) {
         // TODO: Temporarty showcase
 
-        using mSplay = SplayTree<int, int, std::greater<>>;
+        using mSplay = SplayTreeT<int, int, std::greater<>>;
 
         mSplay tree{};
         for (int i = 0; i < 10; ++i)
             tree.Add(i+1, i);
 
         std::cout << "Simple 10-element sequence input\n";
-        // tree.Print();
+        tree.Print();
 
         std::cout << "After Search(1) invoc\n";
         tree.Contains(1);
-        // tree.Print();
+        tree.Print();
 
         std::cout << "After Search(2) invoc\n";
         tree.Contains(2);

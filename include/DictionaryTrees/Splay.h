@@ -15,7 +15,7 @@ template<
     class keyT,
     class itemT,
     class predT
-> class SplayTree {
+> class SplayTreeT {
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -29,26 +29,26 @@ template<
     // ------------------------------
 public:
 
-    SplayTree() = default;
+    SplayTreeT() = default;
 
     template<class indexableT>
-    SplayTree(const indexableT& indexableContainer, const size_t size) {
+    SplayTreeT(const indexableT& indexableContainer, const size_t size) {
         for (size_t i = 0; i < size; ++i)
             Add(indexableContainer[i]);
     }
 
-    SplayTree(std::initializer_list<mPair> init) {
+    SplayTreeT(std::initializer_list<mPair> init) {
         for (auto pair: init) {
             Add(pair);
         }
     }
 
-    SplayTree(const SplayTree& other): _root{CloneTree(other._root)} {}
-    SplayTree(SplayTree&& other) noexcept: _root{other._root} {
+    SplayTreeT(const SplayTreeT& other): _root{CloneTree(other._root)} {}
+    SplayTreeT(SplayTreeT&& other) noexcept: _root{other._root} {
         other._root = nullptr;
     }
 
-    SplayTree& operator=(const SplayTree& other) {
+    SplayTreeT& operator=(const SplayTreeT& other) {
         if (this == &other) return *this;
 
         CleanTree(_root);
@@ -57,7 +57,7 @@ public:
         return *this;
     }
 
-    SplayTree& operator=(SplayTree&& other)  noexcept {
+    SplayTreeT& operator=(SplayTreeT&& other)  noexcept {
         if (this == &other) return *this;
 
         CleanTree(_root);
@@ -67,7 +67,7 @@ public:
         return *this;
     }
 
-    ~SplayTree() {
+    ~SplayTreeT() {
         CleanTree(_root);
     }
 

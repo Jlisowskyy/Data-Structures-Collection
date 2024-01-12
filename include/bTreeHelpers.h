@@ -23,6 +23,8 @@ struct basicNode {
     basicNode(const itemT& nItem, const keyT& nkey): content{nItem, nkey} {}
     ~basicNode() = default;
 
+    // All operators below simplifies expressions used literally in all structures
+
     friend bool operator>(const basicNode& a, const basicNode& b) {
         return pred(a.content.first, b.content.first);
     }
@@ -99,7 +101,9 @@ void TestQueuePrint(const nodeT* n) {
 }
 
 template<class nodeT>
-void CleanTree(const nodeT* n) {
+void CleanTree(const nodeT* n)
+    // Simplest recursive deleteng function
+{
     if (!n) return;
 
     CleanTree(n->left);
@@ -109,11 +113,14 @@ void CleanTree(const nodeT* n) {
 }
 
 template<class nodeT>
-nodeT* CloneTree(const nodeT* n) {
+nodeT* CloneTree(const nodeT* n)
+    // clones tree and returns its root with all branches
+{
     if (!n) return nullptr;
 
     auto* retNode = new nodeT(*n);
 
+    // Get both subtrees
     retNode->left = CloneTree(n->left);
     retNode->right = CloneTree(n->right);
 
@@ -126,6 +133,7 @@ class PrettyBTreePrinter {
     // class innerTypes
     // ------------------------------
 
+    // Used to get logical representation of tree in heap-like cordinates
     struct printInfo {
         printInfo() = default;
         ~printInfo() = default;
@@ -134,7 +142,8 @@ class PrettyBTreePrinter {
         size_t rowInd{};
         const nodeT* node{};
 
-        friend bool operator<(const printInfo& a, const printInfo& b) {
+        // Orders all elements in heap like cordinates sequence
+        friend bool operator>(const printInfo& a, const printInfo& b) {
             return (a.depth > b.depth) || (a.depth == b.depth && a.rowInd > b.rowInd);
         }
     };
@@ -152,11 +161,14 @@ public:
     // Class interaction
     // ------------------------------
 
+    using queT = std::priority_queue<printInfo, std::vector<printInfo>, std::greater<>>;
+
     static void SetSpacing(const std::pair<size_t, size_t>& spacings) {
         verticalSpacing = spacings.first;
         horizontalSpacing = spacings.second;
     }
 
+    // Performs whole printing
     static std::ostream& PrintWithQueue(std::ostream& out, const nodeT* const root) {
         if (!root) {
             out << "Empty tree\n";
@@ -164,41 +176,60 @@ public:
         }
 
         const size_t largestPrint = FindlargestPrintSize(root);
-        const size_t maxDepth = FindTreeDepth(root, -1);
-        const size_t myhorizontalSpacing = std::max(horizontalSpacing, largestPrint);
-        const size_t lowestRowSize = (1 << maxDepth) * largestPrint + ((1 << maxDepth) - 1) * myhorizontalSpacing;
-        const std::string emptySpaceStr(largestPrint, ' ');
-        const std::string verSpaceStr(verticalSpacing, '\n');
+        // is used in whole printing as length of single element print
 
-        std::priority_queue<printInfo> que{};
+        const size_t maxDepth = FindTreeDepth(root, -1);
+        // used to calculate whole tree size
+
+        const size_t myhorizontalSpacing = std::max(horizontalSpacing, largestPrint);
+        // checks wheter there is need to extend standard horizontal spacing to not be smaller than single print unit
+
+        const size_t lowestRowSize = (1 << maxDepth) * largestPrint + ((1 << maxDepth) - 1) * myhorizontalSpacing;
+        // amount of characters needed in last row
+
+        const std::string emptySpaceStr(largestPrint, ' ');
+        // string used to substitute lacking node
+
+        const std::string verSpaceStr(verticalSpacing, '\n');
+        // used to display vertical spacings
+
+        queT que{};
+        // orders all nodes by its print sequence
         _gatherPrintInfo(root, que);
 
+        // Loops throught all depths avoiding last one
         for (size_t i = 0; i < maxDepth; ++i) {
-            const size_t layerElemCount = 1 << i;
-            const double layerDivider = 1 << (i + 1);
+            const size_t layerElemCount = 1 << i; // 2^i
+            const double layerDivider = 1 << (i + 1); // 2^(i+1) - determines how large should be left offset
             const size_t leftOffset = ((double)(lowestRowSize - layerElemCount*largestPrint)) / layerDivider;
 
             // setting up left offset
             out << std::string(leftOffset, ' ');
 
+            // All below calculates how big space between following elements should be
             const size_t layerSpace = lowestRowSize - 2 * leftOffset;
             const size_t interSpace = layerElemCount == 1 ? 0 : (layerSpace - layerElemCount*largestPrint) / (layerElemCount - 1);
             const std::string interSpaceStr(interSpace, ' ');
 
             size_t expectedRowIndex = 0;
+
+            // get all elements from our floor
             while(!que.empty() && que.top().depth == i) {
                 auto elem = que.top();
                 que.pop();
 
+                // replace lacking elements with blank strings
                 while(expectedRowIndex != elem.rowInd) {
                     out << emptySpaceStr << interSpaceStr;
                     ++expectedRowIndex;
                 }
 
+                // print actual element
                 out << std::setw(largestPrint) << *elem.node << interSpaceStr;
                 ++expectedRowIndex;
             }
 
+            // display vertical spacing
             out << std::endl << verSpaceStr;
         }
 
@@ -216,7 +247,7 @@ public:
             out << std::string(dist * singleSpace + dist * largestPrint , ' ') << std::setw(largestPrint) << *elem.node << std::string(myhorizontalSpacing, ' ');
         }
 
-        return out;
+        return out << std::endl;
     }
 
     // expects node to have overloaded printing operator
@@ -246,7 +277,8 @@ public:
     // ------------------------------
 private:
 
-    static void _gatherPrintInfo(const nodeT* const n, std::priority_queue<printInfo>& que) {
+    // boots up recursive procedure, wchich collects information about tree
+    static void _gatherPrintInfo(const nodeT* const n, queT& que) {
         if (!n) return;
 
         printInfo info{};
@@ -257,7 +289,8 @@ private:
         _gatherPrintInfoRec(n->right, que, info);
     }
 
-    static void _gatherPrintInfoRec(const nodeT* const n, std::priority_queue<printInfo>& que, const printInfo& pInfo) {
+    // recursive tree info gathering
+    static void _gatherPrintInfoRec(const nodeT* const n, queT& que, const printInfo& pInfo) {
         if (!n) return;
 
         printInfo info{};
