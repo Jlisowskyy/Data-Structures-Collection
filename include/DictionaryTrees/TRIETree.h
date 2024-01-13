@@ -5,7 +5,11 @@
 #ifndef TRIETREE_H
 #define TRIETREE_H
 
+#include <cinttypes>
+#include <iostream>
+
 #include "depth1MapT.h"
+#include "../arrayBasedTreeHelpers.h"
 
 template<
         class keyT,
@@ -16,5 +20,7 @@ template<
 >class TRIEtreeT {
 
 };
+
+
 
 #endif //TRIETREE_H

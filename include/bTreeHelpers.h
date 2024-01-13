@@ -70,12 +70,14 @@ private:
 };
 
 template<class nodeT>
-void SimplestRecursivePrint(const nodeT* const n, const size_t depth) {
-    if (!n) return;
+std::ostream& SimplestRecursivePrint(const nodeT* const n, const size_t depth, std::ostream& out = std::cout) {
+    if (!n) return out;
 
-    SimplestRecursivePrint(n->left, depth + 4);
-    std::cout << std::string(depth, ' ') << *n << std::endl;
-    SimplestRecursivePrint(n->right, depth + 4);
+    SimplestRecursivePrint(n->left, depth + 4, out);
+    out << std::string(depth, ' ') << *n << std::endl;
+    SimplestRecursivePrint(n->right, depth + 4, out);
+
+    return out;
 }
 
 template<class nodeT>
