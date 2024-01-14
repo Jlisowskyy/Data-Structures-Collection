@@ -84,6 +84,7 @@ public:
     // ------------------------------
     // private methods
     // ------------------------------
+private:
 
     bool _insert(const uint32_t key) {
         node** n = _search(key);
@@ -165,8 +166,6 @@ public:
         return true;
     }
 
-private:
-
     static unsigned _extractBit(const uint32_t key, const int pos) {
         return (key >> pos) & 1;
     }
@@ -210,7 +209,7 @@ class binaryTRIE{
 public:
 
     binaryTRIE() = default;
-    binaryTRIE(const std::initializer_list<uint32_t>& init): binaryTRIE() {
+    binaryTRIE(const std::initializer_list<uint32_t>& init) {
         for (const auto bitSequence: init) {
             Insert(bitSequence);
         }
@@ -245,6 +244,7 @@ public:
     // ------------------------------
     // private methods
     // ------------------------------
+private:
 
     static bool _deleteRecu(const uint32_t key, const uint bPos, node** root) {
         // encountered empty field abort
@@ -264,10 +264,9 @@ public:
 
         // if leaf is not reached perform search
         const uint cleanBranch = _extractBit(key, bPos);
-        const bool result = _deleteRecu(key, bPos-1, &(*root)->next[cleanBranch]);
 
         // no cleaning is necessary abort
-        if (result == false) return false;
+        if (!_deleteRecu(key, bPos-1, &(*root)->next[cleanBranch])) return false;
 
         const uint otherBranch = (cleanBranch+1)&1;
 
@@ -336,8 +335,6 @@ public:
         return *p && (*p)->elem == key;
     }
 
-private:
-
     static constexpr uint _extractBit(const uint32_t key, const uint pos) {
         return (key >> pos) & 1;
     }
@@ -350,6 +347,159 @@ private:
     node* _root{};
 };
 
+template<uint maxBit = 3>
+class binaryPATRICIA{
+    // ------------------------------
+    // Class inner types
+    // ------------------------------
+
+    static constexpr size_t NextCount = 2;
+
+    struct node {
+        node() = default;
+        explicit node(const uint32_t key) : elem{key} {}
+
+        node* next[NextCount]{};
+        uint32_t elem{};
+        u_char bit{};
+
+        friend std::ostream& operator<<(std::ostream& out, const node& n) {
+            return out << std::bitset<maxBit+1>(n.elem);
+        }
+    };
+
+    enum childs {
+        left,
+        right
+    };
+
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+public:
+
+    binaryPATRICIA() = default;
+
+    binaryPATRICIA(const std::initializer_list<uint32_t>& init){
+        for (const auto bitSequence: init) {
+            Insert(bitSequence);
+        }
+    }
+
+    ~binaryPATRICIA() {
+        _cleanPatricia(_root);
+    }
+
+    // ------------------------------
+    // class interaction
+    // ------------------------------
+
+    bool Insert(const uint32_t key) {
+        return _insert(key);
+    }
+
+    bool Delete(const uint32_t key) {
+
+        return false;
+    }
+
+    bool Contains(const uint32_t key) {
+        return _search(key)->elem == key;
+    }
+
+    std::ostream& Print(std::ostream& out = std::cout) const {
+        return _printRecu(out, _root, 0);
+    }
+
+    // ------------------------------
+    // private methods
+    // ------------------------------
+private:
+
+    static void _cleanPatricia(const node* n) {
+        if (n->next[left]->bit < n->bit)
+            _cleanPatricia(n->next[left]);
+        if (n->next[right]->bit < n->bit)
+            _cleanPatricia(n->next[right]);
+
+        delete n;
+    }
+
+    static std::ostream& _printRecu(std::ostream& out, const node* const n, const uint depth) {
+        if (n->next[left]->bit < n->bit)
+            _printRecu(out, n->next[left], depth+4);
+        out << std::string(depth, ' ') << *n << std::endl;
+        if (n->next[right]->bit < n->bit)
+            _printRecu(out, n->next[right], depth+4);
+
+        return out;
+    }
+
+    bool _insert(const uint32_t key) {
+
+        if (!_root) {
+            node* sentinel = new node(0);
+            sentinel->next[0] = sentinel->next[1] = sentinel;
+
+            _root = new node(key);
+            _root->bit = maxBit;
+            _root->next[_extractBit(key, maxBit)] = _root;
+            _root->next[1-_extractBit(key, maxBit)] = sentinel;
+
+            return true;
+        }
+
+        // Finding spot to place new key
+        node* elemToFind = _search(key);
+
+        // If already exists abort
+        if (elemToFind->elem == key) return false;
+
+        // Find position of first differing bit - nobki tutaj nie rozumieja
+        const uint32_t differingBits = key ^ elemToFind->elem;
+        uint firstDifferingBit = __builtin_clz(differingBits)^31;
+
+        // Find exact parent to which new key should be linked, between pp and p
+        node* p = _root;
+        node* pp{};
+
+        do {
+            pp = p;
+            p = p->next[_extractBit(key, p->bit)];
+        }while(pp->bit > p->bit && p->bit > firstDifferingBit);
+
+        // add new node between pp and p
+        node* nNode = new node(key);
+        nNode->bit = firstDifferingBit;
+        nNode->next[_extractBit(key, firstDifferingBit)] = nNode;
+        nNode->next[1 - _extractBit(key, firstDifferingBit)] = p;
+        pp->next[_extractBit(key, pp->bit)] = nNode;
+
+        return true;
+    }
+
+    node* _search(const uint32_t key) {
+        node* p = _root;
+        node* pp{};
+
+        do {
+            pp = p;
+            p = p->next[_extractBit(key, p->bit)];
+        }while(pp->bit > p->bit);
+
+        return p;
+    }
+
+    static constexpr uint _extractBit(const uint32_t key, const uint pos) {
+        return (key >> pos) & 1;
+    }
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+
+    node* _root{};
+};
 
 
 #endif //BINARYTRIALSTRUCTURES_H

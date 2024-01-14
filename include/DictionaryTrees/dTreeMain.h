@@ -9,8 +9,9 @@
 #include "binaryTRIALStructures.h"
 
 static constexpr bool displaySplayTree = false;
-static constexpr bool displayTrieTree = true;
+static constexpr bool displayTrieTree = false;
 static constexpr bool displayRstTree = false;
+static constexpr bool displayPATRICIATree = true;
 
 inline int dTreeMain() {
     if constexpr (displaySplayTree) {
@@ -35,40 +36,30 @@ inline int dTreeMain() {
     }
 
     if constexpr (displayTrieTree) {
-        binaryTRIE trie{};
+        binaryTRIE trie{
+            0b0100u,
+            0b1100u,
+            0b1111u,
+            0b0101u,
+            0b0001u,
+            0b0111u,
+            0b1001u,
+            0b1010u,
+            0b1111u,
+            0b1110u
+        };
 
-
-        for (const auto elem: {
-            // 0b0100,
-            // 0b1100,
-            // 0b1111,
-            // 0b0101,
-            // 0b0001,
-            // 0b0111,
-            // 0b1001,
-            // 0b1010
-                0b1111u,
-                0b1110u
-        })
-        {
-            trie.Insert(elem);
-            trie.Print();
-            std::cout << "---------------------------------------------------\n";
-        }
-
-        trie.Delete(0b1111u);
         trie.Print();
-        // trie.Delete(0b0100);
-        // std::cout << "---------------------------------------------------\n";
-        // trie.Print();
-        //
-        // trie.Delete(0b0001);
-        // std::cout << "---------------------------------------------------\n";
-        // trie.Print();
-        //
-        // trie.Delete(0b0111);
-        // std::cout << "---------------------------------------------------\n";
-        // trie.Print();
+        std::cout << "---------------------------------------------------\n";
+
+        trie.Delete(0b1100);
+        trie.Print();
+
+        std::cout << "---------------------------------------------------\n";
+
+        trie.Delete(0b0001);
+        trie.Print();
+
     }
 
     if constexpr (displayRstTree) {
@@ -95,6 +86,21 @@ inline int dTreeMain() {
         rst.Delete(0b0111);
         std::cout << "---------------------------------------------------\n";
         rst.Print();
+    }
+
+    if constexpr (displayPATRICIATree) {
+        binaryPATRICIA patricia{
+            0b1111,
+            0b0111,
+            0b1010,
+            0b0001,
+            0b0100,
+            0b1001,
+            0b1100,
+            0b0101,
+        };
+
+        patricia.Print();
     }
 
     return 0;
