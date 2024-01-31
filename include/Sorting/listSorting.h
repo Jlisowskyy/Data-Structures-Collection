@@ -85,6 +85,53 @@ void HeapSort(nodeT*& root) {
     }
 }
 
+template<class nodeT, class predT = std::greater<>>
+void QuickSort(nodeT*& root) {
+    static const predT pred{};
+    static const auto Push = [](nodeT*& head, nodeT*& tail, nodeT* node) {
+        if (!head) {
+            head = node;
+            tail = node;
+            return;
+        }
+
+        node->getNext() = head;
+        head = node;
+    };
+
+    if (!root) return;
+
+    nodeT *L{}, *M{}, *R{};
+    nodeT *LTail{}, *MTail{}, *RTail{};
+    auto v = root->getItem();
+
+    while(root) {
+        nodeT* n = root;
+        root = root->getNext();
+        n->getNext() = nullptr;
+
+        if (pred(n->getItem(), v))
+            Push(L, LTail, n);
+        else if (pred(v, n->getItem()))
+            Push(R, RTail, n);
+        else
+            Push(M, MTail, n);
+    }
+
+    QuickSort(L);
+    QuickSort(R);
+
+    if (L) {
+        root = L;
+        LTail->getNext() = M;
+    }
+    else
+        root = M;
+
+    MTail->getNext() = R;
+}
+
+
 
 
 

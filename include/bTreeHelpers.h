@@ -237,7 +237,7 @@ public:
 
         size_t expectedRowIndex = 0;
         const size_t LastRowSpaces = lowestRowSize - (1 << maxDepth) * largestPrint;
-        const double singleSpace = LastRowSpaces / ((1 << maxDepth) - 1);
+        const double singleSpace = maxDepth == 0? 0 : LastRowSpaces / ((1 << maxDepth) - 1);
 
         while(!que.empty()) {
             auto elem = que.top();

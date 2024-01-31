@@ -8,31 +8,46 @@
 #include "Splay.h"
 #include "binaryTRIALStructures.h"
 
-static constexpr bool displaySplayTree = false;
+static constexpr bool displaySplayTree = true;
 static constexpr bool displayTrieTree = false;
 static constexpr bool displayRstTree = false;
-static constexpr bool displayPATRICIATree = true;
+static constexpr bool displayPATRICIATree = false;
 
 inline int dTreeMain() {
     if constexpr (displaySplayTree) {
-        // TODO: Temporarty showcase
+        // // TODO: Temporarty showcase
+        //
+        // using mSplay = SplayTreeT<int, int, std::greater<>>;
+        //
+        // mSplay tree{};
+        // for (int i = 0; i < 10; ++i)
+        //     tree.Add(i+1, i);
+        //
+        // std::cout << "Simple 10-element sequence input\n";
+        // tree.Print();
+        //
+        // std::cout << "After Search(1) invoc\n";
+        // tree.Contains(1);
+        // tree.Print();
+        //
+        // std::cout << "After Search(2) invoc\n";
+        // tree.Contains(2);
+        // tree.Print();
 
-        using mSplay = SplayTreeT<int, int, std::greater<>>;
-
+        using mSplay = SplayTreeT<char, char, std::greater<>>;
         mSplay tree{};
-        for (int i = 0; i < 10; ++i)
-            tree.Add(i+1, i);
 
-        std::cout << "Simple 10-element sequence input\n";
-        tree.Print();
+        for(auto elem : {'J', 'A', 'K', 'U'}) {
+            tree.Add(elem, elem);
+            std::cout << "-------------------\n";
+            tree.Print();
+        }
 
-        std::cout << "After Search(1) invoc\n";
-        tree.Contains(1);
+        std::cout << "-------------------\n";
+        tree.Delete('A');
         tree.Print();
-
-        std::cout << "After Search(2) invoc\n";
-        tree.Contains(2);
-        tree.Print();
+        // tree.Contains('U');
+        // tree.Print();
     }
 
     if constexpr (displayTrieTree) {
