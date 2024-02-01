@@ -54,12 +54,13 @@ void performHashTest(const size_t attemptCount, const std::vector<size_t>& elems
     std::cout << std::format("Average hashrate: {} insertsPerMs\n", 5 * elems.size() / sum);
 }
 
-template<class hashmap>
+template<class hashmap, bool check = false>
 void performAccessTest(const size_t attemptCount, const std::vector<size_t>& indexes, const std::vector<size_t>& elems) {
     double sum{};
 
     for (size_t i = 0; i < attemptCount; ++i) {
         hashmap map{};
+        for (const auto elem : elems) map.insert(std::make_pair(elem, elem));
 
         auto t1 = std::chrono::steady_clock::now();
         for (const auto ind : indexes) ++map[elems[ind]];
@@ -70,10 +71,13 @@ void performAccessTest(const size_t attemptCount, const std::vector<size_t>& ind
 
         std::cout << std::format("Attempt number {}: {}ms\n", i + 1, time);
 
+        if constexpr (check) {
+            std::cout << std::format("Maximal load on bucket: {}\n", map.getMaximalBucketLoad());
+        }
     }
 
     std::cout << std::format("Average time after {} attempt: {}ms\n", attemptCount, sum/attemptCount);
-    std::cout << std::format("Average access: {} acecsPerMs\n", 5 * indexes.size() / sum);
+    std::cout << std::format("Average access: {} accessesPerMs\n", 5 * indexes.size() / sum);
 }
 
 #endif //HASHINGMAIN_H

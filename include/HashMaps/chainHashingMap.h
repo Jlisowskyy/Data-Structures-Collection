@@ -24,9 +24,9 @@
  *  - "bool safeRemove(const KeyT&)" method - performs removing only if is sure that key exists inside the bucket
  *  - "ItemT& get(const KeyT&)" method - returns matching element. It can assume that element exists.
  *  - "ItemT& safeGet(const KeyT&)" method - returns matching element if exists if not create empty slot under passed keys and returns reference to this slot
- *  - "static std::pair<std::vector<BucketT>,size_t> reorganizeBuckets(std::vector<BucketT>, size_t, HashFuncT)" -
+ *  - "static std::vector<BucketT>reorganizeBuckets(std::vector<BucketT>, size_t, HashFuncT)" -
  *      reorganizes buckets passed as parameter to a new set of buckets of size passed as an argument
- *      with manner defined by passed hash function. Returns new organized vector and amount of used buckets
+ *      with manner defined by passed hash function. Returns new organized vector
  *
  */
 
@@ -93,9 +93,8 @@ public:
     }
 
     template<class OuterHashFuncT>
-    static std::pair<std::vector<PlainHashBucketT>, size_t> reorganizeBuckets(std::vector<PlainHashBucketT> oldBuckets, size_t nSize, OuterHashFuncT nFunc) {
+    static std::vector<PlainHashBucketT> reorganizeBuckets(std::vector<PlainHashBucketT> oldBuckets, size_t nSize, OuterHashFuncT nFunc) {
         std::vector<PlainHashBucketT> nBuckets(nSize);
-        size_t usedBuckets {};
 
         for (const auto& oBucket : oldBuckets) {
             const auto& [ oKeys, oItems, occup ] = oBucket._map.getUnderlyingArrays();
@@ -103,13 +102,11 @@ public:
             for (size_t i = 0; i < occup.size(); ++i)
                 if (occup[i] == true) {
                     const size_t hash = nFunc(oKeys[i]);
-                    nBuckets[hash].insert(oKeys[i], oItems[i]);
-
-                    usedBuckets += nBuckets[hash].size() == 1 ? 1 : 0;
+                    nBuckets[hash]._insert(oKeys[i], oItems[i]);
                 }
         }
 
-        return {nBuckets, usedBuckets};
+        return nBuckets;
     }
 
 
@@ -117,15 +114,14 @@ public:
     // Private methods
     // ------------------------------
 private:
+
+    // TODO: try to change a little the formula so instead rehashin we will instantly resize
     void _insert(const KeyT& key, const ItemT& item) {
-
-
         if (++_elemCount == _nextResize) {
             _nextResize++;
             _map.resize(_map.getSize() * DefaultResizeCoef, INT_MAX);
         }
 
-        int tries = 0;
         while (!_map.insert(key, item)) {
             _map.resize(_map.getSize(), 1);
         } // also performs rehashing
@@ -138,7 +134,7 @@ private:
 public:
     static constexpr size_t DefaultBucketSize = 4;
     static constexpr size_t DefaultResizeCoef = 2;
-    static constexpr size_t StartResizeTrehsold = 2;
+    static constexpr size_t StartResizeTrehsold = 3;
 private:
     size_t _elemCount = 0;
     size_t _nextResize = StartResizeTrehsold;
@@ -294,9 +290,8 @@ public:
     }
 
     template<class OuterHashFuncT>
-    [[nodiscard]] static std::pair<std::vector<LinkedListBucketT>, size_t> reorganizeBuckets(std::vector<LinkedListBucketT> oldBuckets, size_t nSize, OuterHashFuncT nFunc) {
+    [[nodiscard]] static std::vector<LinkedListBucketT> reorganizeBuckets(std::vector<LinkedListBucketT> oldBuckets, size_t nSize, OuterHashFuncT nFunc) {
         std::vector<LinkedListBucketT> nBuckets(nSize);
-        size_t usedBuckets {};
 
         for (auto& oBucket : oldBuckets) {
             for (size_t i = 0; i < oBucket.size(); ++i) {
@@ -304,12 +299,10 @@ public:
 
                 const size_t hash = nFunc(n->_key);
                 nBuckets[hash]._attachFirst(n);
-
-                usedBuckets += (nBuckets[hash].size() == 1 ? 1 : 0);
             }
         }
 
-        return {nBuckets, usedBuckets};
+        return nBuckets;
     }
 
     // ------------------------------
@@ -344,7 +337,7 @@ template<
     class KeyT,
     class ItemT,
     class ComparerT = std::equal_to<KeyT>,
-    class HashFuncT = BaseHashFunction<KeyT>,
+    class HashFuncT = BaseHashFunction<KeyT, true>,
     class BucketT = PlainHashBucketT<KeyT, ItemT, ComparerT>
 > class _chainHashingMapT {
     // ------------------------------
@@ -376,7 +369,6 @@ public:
         const size_t hash = _hFunc(key);
 
         if (!_buckets[hash].insert(key, item)) return false;
-        _bucketCount += _buckets[hash].size() == 1 ? 1 : 0;
 
         if (++_elemCount > _nextRehash) _resize();
         return true;
@@ -390,19 +382,13 @@ public:
         const size_t hash = _hFunc(key);
 
         _buckets[hash].remove(key);
-        _bucketCount -= _buckets[hash].size() == 0 ? 1 : 0;
     }
 
     bool safeRemove(const KeyT& key) {
         const size_t hash = _hFunc(key);
 
         const bool result = _buckets[hash].safeRemove(key);
-        _bucketCount -= _buckets[hash].size() == 0 ? 1 : 0;
         return result;
-    }
-
-    [[nodiscard]] size_t getBucketCount() const {
-        return _bucketCount;
     }
 
     [[nodiscard]] size_t size() const {
@@ -410,7 +396,7 @@ public:
     }
 
     [[nodiscard]] float load_factor() const {
-        return static_cast<float>(_elemCount) / static_cast<float>(_bucketCount);
+        return static_cast<float>(_elemCount) / _buckets.size();
     }
 
     [[nodiscard]] size_t getMaxBucketSize() const {
@@ -443,6 +429,15 @@ public:
         return _buckets[_hFunc(key)].safeGet(key);
     }
 
+    [[nodiscard]] size_t getMaximalBucketLoad() const {
+        size_t max = 0;
+
+        for (const auto& bucket : _buckets)
+            if (const size_t size = bucket.size(); size > max) max = size;
+
+        return max;
+    }
+
     // ------------------------------
     // class private methods
     // ------------------------------
@@ -456,10 +451,7 @@ private:
 
     void _rehash(const size_t size) {
         _hFunc = HashFuncT(size);
-        auto [buckets, activeBuckets] = BucketT::reorganizeBuckets(_buckets, size, _hFunc);
-
-        _buckets = buckets;
-        _bucketCount = activeBuckets;
+        _buckets = std::move(BucketT::reorganizeBuckets(_buckets, size, _hFunc));
     }
 
     // ------------------------------
@@ -475,7 +467,6 @@ private:
 
     size_t _nextRehash; // next barrier, which overloading concludes to full rehash
     size_t _elemCount{}; // actual existing items in container
-    size_t _bucketCount{}; // number of active buckets
 
     std::vector<BucketT> _buckets{};
 };

@@ -61,8 +61,8 @@ void ExpandiblePlainMapTest() {
 }
 
 void HashRateTest() {
-    static constexpr auto elementCount = static_cast<size_t>(1e+5);
-    static constexpr auto accessCount = static_cast<size_t>(1e+6);
+    static constexpr auto elementCount = static_cast<size_t>(1e+6);
+    static constexpr auto accessCount = static_cast<size_t>(1e+7);
     static constexpr size_t elementStep = 5;
     static constexpr size_t initElem  = 1;
     static constexpr size_t tryPerMap = 5;
@@ -89,7 +89,7 @@ void HashRateTest() {
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "Unordered map test:\n";
-    performHashTest<std::unordered_map<size_t, size_t>, true>(tryPerMap, elems);
+    performHashTest<std::unordered_map<size_t, size_t>>(tryPerMap, elems);
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "map test:\n";
@@ -97,11 +97,11 @@ void HashRateTest() {
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with list buckets test:\n";
-    performHashTest<_chainHashingMapT<size_t, size_t, std::equal_to<size_t>, BaseHashFunction<size_t, true>, LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>, true>(tryPerMap, elems);
+    performHashTest<_chainHashingMapT<size_t, size_t, std::equal_to<size_t>, BaseHashFunction<size_t, true>, LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>>(tryPerMap, elems);
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with hash buckets test:\n";
-    performHashTest<_chainHashingMapT<size_t, size_t>, true>(tryPerMap, elems);
+    performHashTest<_chainHashingMapT<size_t, size_t>>(tryPerMap, elems);
     std::cout << "-------------------------------------------------------\n";
 
     // ------------------------------
@@ -120,11 +120,11 @@ void HashRateTest() {
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with list buckets test:\n";
-    performAccessTest<_chainHashingMapT<size_t, size_t, std::equal_to<size_t>, BaseHashFunction<size_t>,
-        LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>>(tryPerMap, accessIndexes, elems);
+    performAccessTest<_chainHashingMapT<size_t, size_t, std::equal_to<size_t>, BaseHashFunction<size_t, true>,
+        LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>, true>(tryPerMap, accessIndexes, elems);
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with hash buckets test:\n";
-    performAccessTest<_chainHashingMapT<size_t, size_t>>(tryPerMap, accessIndexes, elems);
+    performAccessTest<_chainHashingMapT<size_t, size_t>, true>(tryPerMap, accessIndexes, elems);
     std::cout << "-------------------------------------------------------\n";
 }
