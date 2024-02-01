@@ -20,6 +20,7 @@ struct basicNode {
     basicNode() = default;
     basicNode(const basicNode& other): content{other.content} {}
     explicit basicNode(const std::pair<keyT, itemT>& pair): content{pair} {}
+    explicit basicNode(std::pair<keyT, itemT>&& pair): content(std::move(pair)) {}
     basicNode(const itemT& nItem, const keyT& nkey): content{nItem, nkey} {}
     ~basicNode() = default;
 

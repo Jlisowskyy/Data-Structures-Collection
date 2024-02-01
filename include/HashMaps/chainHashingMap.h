@@ -9,7 +9,7 @@
 #include "../linkedListHelpers.h"
 
 #include <functional>
-#include <limits.h>
+#include <climits>
 #include <vector>
 
 /*                  IMPORTANT NOTES - BUCKETS:
@@ -28,6 +28,13 @@
  *      reorganizes buckets passed as parameter to a new set of buckets of size passed as an argument
  *      with manner defined by passed hash function. Returns new organized vector
  *
+ */
+
+/*                  GENRAL TODOS:
+ *  - add resizing when load_factor drops below some treshold
+ *  - rewrite rehash method
+ *  - implement other bucket types?
+ *  - boost hash bucket perofmance further
  */
 
 template <
@@ -407,6 +414,7 @@ public:
         return _rehashPolicy;
     }
 
+    // TODO: change it LOAD_FACTOR !+ BUCKET_RATIO
     bool rehash(const float desiredBucketRatio = 1.5, const int maxTries = 3) {
         int tries = 0;
 
@@ -458,7 +466,7 @@ private:
     // class fields
     // ------------------------------
 public:
-    static constexpr double DefaultRehashPolicy = 1.0;
+    static constexpr double DefaultRehashPolicy = 2;
     static constexpr size_t InitMapSize = 8;
 private:
     HashFuncT _hFunc;
