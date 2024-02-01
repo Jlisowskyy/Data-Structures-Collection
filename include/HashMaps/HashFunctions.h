@@ -43,8 +43,8 @@ inline int extractMSB(const size_t x)
 }
 
 template<
-    class ItemT,
-    size_t (*HashableAccessor)(const ItemT& item) = [](const ItemT& item) { return static_cast<size_t>(item); },
+    class KeyT,
+    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) { return static_cast<size_t>(item); },
     bool OptimizeSecondModulo = false
 >class BaseHashFunction {
 
@@ -112,7 +112,7 @@ public:
         return _prime-1;
     }
 
-    size_t operator()(const ItemT& val) const {
+    size_t operator()(const KeyT& val) const {
         const size_t hashable = HashableAccessor(val);
 
         if constexpr (OptimizeSecondModulo)

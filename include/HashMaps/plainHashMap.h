@@ -34,7 +34,7 @@ public:
     // Class interaction
     // ------------------------------
 
-    bool Insert(const KeyT& key, const ItemT& item) {
+    [[nodiscard]] bool insert(const KeyT& key, const ItemT& item) {
         const size_t hash = _hFunc(key);
 
         if (!_occupancyTable[hash]) {
@@ -47,60 +47,49 @@ public:
         return false;
     }
 
-    bool Search(const KeyT& key) const {
+    [[nodiscard]] bool search(const KeyT& key) const {
         return _occupancyTable[_hFunc(key)];
     }
 
-    bool SearchAndSave(const KeyT& key) {
+    [[nodiscard]] bool searchAndSave(const KeyT& key) {
         const size_t hash = _hFunc(key);
 
         _lastSearch = &_items[hash];
         return _occupancyTable[hash];
     }
 
-    void Delete(const KeyT& key) {
+    void remove(const KeyT& key) {
         _occupancyTable[_hFunc(key)] = false;
     }
 
-    void DeepDelete(const KeyT& key) {
+    void deepDelete(const KeyT& key) {
         const size_t hash = _hFunc(key);
 
         _items[hash] = ItemT{};
         _occupancyTable[_hFunc(key)] = false;
     }
 
-    size_t GetSize() const {
+    [[nodiscard]] size_t getSize() const {
         return _size;
     }
 
-    /*      IMPORTANT NOTES:
-     *
-     *  Any of functions below should not be used to modify
-     *  parameters of contained object, which are directly used
-     *  during hashing process. Its undefined behavior.
-     *
-     */
-
     // Should only be used after successful SearchAndSaveOperation
-    ItemT* GetLastSearched() {
-        return _lastSearch;
+    [[nodiscard]] ItemT& getLastSearched() {
+        return *_lastSearch;
     }
 
-    ItemT& GetItem(const KeyT& key) {
+    [[nodiscard]] ItemT& operator[](const KeyT& key) {
         return _items[_hFunc(key)];
     }
 
-    ItemT& operator[](const KeyT& key) {
-        return _items[_hFunc(key)];
-    }
-
-    const ItemT& operator[](const KeyT& key) const{
+    [[nodiscard]] const ItemT& operator[](const KeyT& key) const{
         return _items[_hFunc(key)];
     }
 
     // ------------------------------
     // private fields
     // ------------------------------
+private:
 
     std::vector<ItemT> _items;
     std::vector<bool> _occupancyTable;
@@ -120,6 +109,8 @@ template<
     // Class creation
     // ------------------------------
 public:
+    _baseExpandiblePlainMapT(): _baseExpandiblePlainMapT(1) {}
+
     explicit _baseExpandiblePlainMapT(const size_t size):
         _basePlainMapT<KeyT, ItemT, HashFuncT>(size), _keys(size, KeyT{}) {}
 
@@ -134,13 +125,12 @@ public:
     // Class interaction
     // ------------------------------
 
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::Search;
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::GetItem;
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::GetLastSearched;
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::SearchAndSave;
+    using _basePlainMapT<KeyT, ItemT, HashFuncT>::search;
+    using _basePlainMapT<KeyT, ItemT, HashFuncT>::getItem;
+    using _basePlainMapT<KeyT, ItemT, HashFuncT>::getLastSearched;
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::operator[];
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::Delete;
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::GetSize;
+    using _basePlainMapT<KeyT, ItemT, HashFuncT>::remove;
+    using _basePlainMapT<KeyT, ItemT, HashFuncT>::getSize;
 
     bool Insert(const KeyT& key, const ItemT& item) {
         const size_t hash = _hFunc(key);
@@ -156,6 +146,14 @@ public:
         return false;
     }
 
+    bool serachAndSave(const KeyT& key) {
+        const size_t hash = _hFunc(key);
+
+        _lastSearch = &_items[hash];
+        _lastSearchedKey = &_keys[hash];
+        return _occupancyTable[hash];
+    }
+
     void DeepDelete(const KeyT& key) {
         const size_t hash = hashFunc(key);
 
@@ -164,12 +162,7 @@ public:
         _keys[hash] = KeyT{};
     }
 
-    // ------------------------------
-    // Private methods
-    // ------------------------------
-private:
-
-    bool _resize(const size_t nSize, const int maxTries) {
+    bool Resize(const size_t nSize, const int maxTries) {
         int tryCount = 0;
 
         do {
@@ -178,6 +171,15 @@ private:
 
         return false;
     }
+
+    const KeyT& getLastSearchedKey() const {
+        return *_lastSearchedKey;
+    }
+
+    // ------------------------------
+    // Private methods
+    // ------------------------------
+private:
 
     bool _performHashMapTransfer(const size_t nSize) {
 
@@ -207,7 +209,6 @@ private:
 
         // setup new parameters
         _size = nSize;
-        _lastSearch = nullptr;
         _hFunc = hashFunc;
         _keys = nKeys;
         _items = nItems;
@@ -219,6 +220,8 @@ private:
     // ------------------------------
     // private fields
     // ------------------------------
+
+    KeyT* _lastSearchedKey = nullptr;
 
     std::vector<KeyT> _keys;
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::_items;
