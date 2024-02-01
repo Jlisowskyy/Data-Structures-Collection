@@ -20,7 +20,7 @@ template<
 public:
 
     explicit _basePlainMapT(const size_t size):
-        _items(size, ItemT{}), _occupancyTable(size, false), _size{size}, _hFunc{size}
+        _items(size), _occupancyTable(size), _size{size}, _hFunc{size}
     {}
 
     _basePlainMapT(const _basePlainMapT&) = default;
@@ -89,7 +89,7 @@ public:
     // ------------------------------
     // private fields
     // ------------------------------
-private:
+protected:
 
     std::vector<ItemT> _items;
     std::vector<bool> _occupancyTable;
@@ -112,7 +112,7 @@ public:
     _baseExpandiblePlainMapT(): _baseExpandiblePlainMapT(1) {}
 
     explicit _baseExpandiblePlainMapT(const size_t size):
-        _basePlainMapT<KeyT, ItemT, HashFuncT>(size), _keys(size, KeyT{}) {}
+        _basePlainMapT<KeyT, ItemT, HashFuncT>(size), _keys(size) {}
 
     _baseExpandiblePlainMapT(const _baseExpandiblePlainMapT&) = default;
     _baseExpandiblePlainMapT(_baseExpandiblePlainMapT&&) = default;
@@ -126,16 +126,13 @@ public:
     // ------------------------------
 
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::search;
-    using _basePlainMapT<KeyT, ItemT, HashFuncT>::getItem;
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::getLastSearched;
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::operator[];
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::remove;
     using _basePlainMapT<KeyT, ItemT, HashFuncT>::getSize;
 
-    bool Insert(const KeyT& key, const ItemT& item) {
-        const size_t hash = _hFunc(key);
-
-        if (!_occupancyTable[hash]) {
+    bool insert(const KeyT& key, const ItemT& item) {
+        if (const size_t hash = _hFunc(key); !_occupancyTable[hash]) {
             _items[hash] = item;
             _occupancyTable[hash] = true;
             _keys[hash] = key;
@@ -146,7 +143,7 @@ public:
         return false;
     }
 
-    bool serachAndSave(const KeyT& key) {
+    [[nodiscard]] bool searchAndSave(const KeyT& key) {
         const size_t hash = _hFunc(key);
 
         _lastSearch = &_items[hash];
@@ -154,7 +151,7 @@ public:
         return _occupancyTable[hash];
     }
 
-    void DeepDelete(const KeyT& key) {
+    void deepDelete(const KeyT& key) {
         const size_t hash = hashFunc(key);
 
         _items[hash] = ItemT{};
@@ -162,7 +159,7 @@ public:
         _keys[hash] = KeyT{};
     }
 
-    bool Resize(const size_t nSize, const int maxTries) {
+    bool resize(const size_t nSize, const int maxTries) {
         int tryCount = 0;
 
         do {
@@ -172,8 +169,12 @@ public:
         return false;
     }
 
-    const KeyT& getLastSearchedKey() const {
+    [[nodiscard]] const KeyT& getLastSearchedKey() const {
         return *_lastSearchedKey;
+    }
+
+    [[nodiscard]] std::tuple<const std::vector<KeyT>&, const std::vector<ItemT>&, const std::vector<bool>&> getUnderlyingArrays() const {
+        return { _keys, _items, _occupancyTable };
     }
 
     // ------------------------------
@@ -184,12 +185,12 @@ private:
     bool _performHashMapTransfer(const size_t nSize) {
 
         // roll new hashfunc
-        auto hashFunc = HashFuncT(nSize);
+        HashFuncT hashFunc(nSize);
 
         // prepare containers
-        std::vector<ItemT> nItems(nSize, ItemT{});
-        std::vector nOccup(nSize, false);
-        std::vector<KeyT> nKeys(nSize, KeyT{});
+        std::vector<ItemT> nItems(nSize);
+        std::vector<bool> nOccup(nSize);
+        std::vector<KeyT> nKeys(nSize);
 
         // copy all existing elements
         for (size_t i = 0; i < _items.size(); ++i) {

@@ -44,8 +44,8 @@ inline int extractMSB(const size_t x)
 
 template<
     class KeyT,
-    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) { return static_cast<size_t>(item); },
-    bool OptimizeSecondModulo = false
+    bool OptimizeSecondModulo = false,
+    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) { return static_cast<size_t>(item); }
 >class BaseHashFunction {
 
     /*               Description
@@ -81,6 +81,11 @@ public:
     {
         RollParameteres();
     }
+
+    BaseHashFunction(const BaseHashFunction&) = default;
+    BaseHashFunction(BaseHashFunction&&) = default;
+    BaseHashFunction& operator=(const BaseHashFunction&) = default;
+    BaseHashFunction& operator=(BaseHashFunction&&) = default;
 
     ~BaseHashFunction() = default;
 
