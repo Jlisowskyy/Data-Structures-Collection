@@ -7,6 +7,7 @@
 #include "../include/DictionaryTrees/Splay.h"
 #include "../include/DictionaryTrees/binaryTRIALStructures.h"
 #include "../include/DictionaryTrees/BSTTree.h"
+#include "../include/DictionaryTrees/AVLTree.h"
 
 #include "../include/structureTesters.h"
 
@@ -86,7 +87,7 @@ void BSTTreeMain() {
 }
 
 void AVLTreeMain() {
-
+    BinaryTreeTester<AVLTree<size_t, size_t>>(true);
 }
 
 void RBTreeMain() {

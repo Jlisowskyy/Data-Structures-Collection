@@ -115,6 +115,7 @@ void CleanTree(const nodeT* n)
     delete n;
 }
 
+// Note: nodeT must have copy constructor defined
 template<class nodeT>
 nodeT* CloneTree(const nodeT* n)
     // clones tree and returns its root with all branches
@@ -260,7 +261,7 @@ public:
         const size_t rSize = FindlargestPrintSize(n->right);
 
         std::ostringstream str{};
-        str << n->content.first;
+        str << *n;
 
         // chosing maximal size
         return std::max(str.str().length(), std::max(lSize, rSize));
