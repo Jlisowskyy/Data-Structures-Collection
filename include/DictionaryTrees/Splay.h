@@ -12,17 +12,17 @@
 #include "../bTreeHelpers.h"
 
 template<
-    class keyT,
-    class itemT,
-    class predT
+    class KeyT,
+    class ItemT,
+    class PredT = std::greater<KeyT>
 > class SplayTreeT {
     // ------------------------------
     // Class inner types
     // ------------------------------
 
-    using mPair = std::pair<keyT, itemT>;
-    using node = basicNode<keyT, itemT, predT>;
-    using SplayCore = _SplayCore<keyT, node>;
+    using mPair = std::pair<KeyT, ItemT>;
+    using node = basicNode<KeyT, ItemT, PredT>;
+    using SplayCore = _SplayCore<KeyT, node>;
 
     // ------------------------------
     // Class creation
@@ -34,12 +34,12 @@ public:
     template<class indexableT>
     SplayTreeT(const indexableT& indexableContainer, const size_t size) {
         for (size_t i = 0; i < size; ++i)
-            Add(indexableContainer[i]);
+            insert(indexableContainer[i]);
     }
 
     SplayTreeT(std::initializer_list<mPair> init) {
         for (auto pair: init) {
-            Add(pair);
+            insert(pair);
         }
     }
 
@@ -75,43 +75,62 @@ public:
     // Class public methods
     // ------------------------------
 
-    void Add(const keyT& key, const itemT& item) {
+    void insert(const KeyT& key, const ItemT& item) {
         if (!_root) _root = new node(std::make_pair(key, item));
         else _insert(std::make_pair(key, item));
     }
 
-    void Add(const mPair&  pair) {
+    void insert(const mPair&  pair) {
         if (!_root) _root = new node(pair);
         else _insert(pair);
     }
 
-    [[nodiscard]] bool Contains(const keyT& key) {
+    [[nodiscard]] bool contains(const KeyT& key) {
         if (!_root) return false;
         SplayCore::splay(key, _root);
 
         return key == *_root ? true : false;
     }
 
-    [[nodiscard]] bool IsEmpty() const { return _root != nullptr; }
+    // Note: tree cannot be empty and should containt desired element
+    [[nodiscard]] ItemT& get(const KeyT& key) {
+        SplayCore::splay(key, _root);
+        return _root->content.second;
+    }
+
+    [[nodiscard]] ItemT& safeGet(const KeyT& key) {
+        if (!_root) _root = new node(key, ItemT{});
+        else SplayCore::splay(key, _root);
+
+        return _root->content.second;
+    }
+
+    [[nodiscard]] ItemT& operator[](const KeyT& key) {
+        return safeGet(key);
+    }
+
+    [[nodiscard]] const ItemT& operator[](const KeyT& key) const {
+        return safeGet(key);
+    }
+
+    [[nodiscard]] bool isEmpty() const { return _root != nullptr; }
 
     // Should only be invoked after Contains returned true or we checked that structure is not empty
-    [[nodiscard]] itemT& GetLastSearched() {
+    [[nodiscard]] ItemT& getLastSearched() {
         return _root->content.second;
     }
 
     // Should only be invoked after Contains returned true or we checked that structure is not empty
-    [[nodiscard]] const itemT& GetLastSearched() const {
+    [[nodiscard]] const ItemT& getLastSearched() const {
         return _root->content.second;
     }
 
-    bool Delete(const keyT& key) {
+    bool remove(const KeyT& key) {
         return _root == nullptr ? false : _delete(key);
     }
 
-    void Print() const {
-        // SimplestRecursivePrint(_root, 0);
-        // TestQueuePrint(_root);
-        PrettyBTreePrinter<node>::PrintWithQueue(std::cout, _root);
+    friend std::ostream& operator<<(std::ostream& out, const SplayTreeT& tree) {
+        return PrettyBTreePrinter<node>::PrintWithQueue(out, tree._root);
     }
 
     // ------------------------------
@@ -120,7 +139,7 @@ public:
 private:
 
     // TODO: comments
-    bool _delete(const keyT& key) {
+    bool _delete(const KeyT& key) {
         SplayCore::splay(key, _root);
 
         if (key != *_root) return false;

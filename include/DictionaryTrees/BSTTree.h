@@ -88,7 +88,7 @@ public:
         return true;
     }
 
-    node* removeAndGetNode(const KeyT& key) {
+    [[nodiscard]] node* removeAndGetNode(const KeyT& key) {
         node** n = _searchDP(key);
         if (!*n) return nullptr;
 
@@ -96,7 +96,7 @@ public:
         return *n;
     }
 
-    bool removeAndGet(const KeyT& key, ItemT& out) {
+    [[nodiscard]] bool removeAndGet(const KeyT& key, ItemT& out) {
         node** n = _searchDP(key);
         if (!*n) return false;
 
@@ -106,31 +106,31 @@ public:
         return true;
     }
 
-    bool contains(const KeyT& key) const {
+    [[nodiscard]] bool contains(const KeyT& key) const {
         auto n = _searchDP(key);
         if (!*n) return false;
         return true;
     }
 
-    ItemT& safeGet(const KeyT& key) {
+    [[nodiscard]] ItemT& safeGet(const KeyT& key) {
         auto n = _searchDP(key);
         if (!*n) {
-            *n = new node(ItemT{}, key);
+            *n = new node(key, ItemT{});
         }
 
-        return *n;
+        return (*n)->content.second;
     }
 
     // Note: key must exist inside the tree
-    ItemT& get(const KeyT& key) const {
-        return **_searchDP(key);
+    [[nodiscard]] ItemT& get(const KeyT& key) const {
+        return (*_searchDP(key))->content.second;
     }
 
-    ItemT& operator[](const KeyT& key) {
+    [[nodiscard]] ItemT& operator[](const KeyT& key) {
         return safeGet(key);
     }
 
-    const ItemT& operator[](const KeyT& key) const {
+    [[nodiscard]] const ItemT& operator[](const KeyT& key) const {
         return get(key);
     }
 
@@ -179,7 +179,7 @@ private:
         node** n =_searchDP(key);
         if (*n) return false;
 
-        *n = new node(item, key);
+        *n = new node(key, item);
         return true;
     }
 
