@@ -62,7 +62,7 @@ void ExpandiblePlainMapTest() {
 
 void HashRateTest() {
     static constexpr auto elementCount = static_cast<size_t>(1e+5);
-    static constexpr auto accessCount = static_cast<size_t>(1e+7);
+    static constexpr auto accessCount = static_cast<size_t>(1e+8);
     static constexpr size_t elementStep = 5;
     static constexpr size_t initElem  = 1;
     static constexpr size_t tryPerMap = 5;
@@ -113,10 +113,6 @@ void HashRateTest() {
     std::cout << "-------------------------------------------------------\n";
     std::cout << "Unordered map test:\n";
     performAccessTest<std::unordered_map<size_t, size_t>>(tryPerMap, accessIndexes, elems);
-
-    std::cout << "-------------------------------------------------------\n";
-    std::cout << "map test:\n";
-    performAccessTest<std::map<size_t, size_t>>(tryPerMap, accessIndexes, elems);
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with list buckets test:\n";

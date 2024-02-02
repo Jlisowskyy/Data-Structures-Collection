@@ -77,6 +77,7 @@ public:
         return _map.searchAndSave(key) && _comp(_map.getLastSearchedKey(), key);
     }
 
+    // NOTE: key must be contained in the bucket
     void remove(const KeyT& key) {
         _map.remove(key);
         --_elemCount;
@@ -100,6 +101,7 @@ public:
         return _map[key];
     }
 
+    // TODO: Possible boost gained with AVX
     template<class OuterHashFuncT>
     static std::vector<PlainHashBucketT> reorganizeBuckets(std::vector<PlainHashBucketT> oldBuckets, size_t nSize, OuterHashFuncT nFunc) {
         std::vector<PlainHashBucketT> nBuckets(nSize);
@@ -123,15 +125,15 @@ public:
     // ------------------------------
 private:
 
-    // TODO: try to change a little the formula so instead rehashin we will instantly resize
     void _insert(const KeyT& key, const ItemT& item) {
         if (++_elemCount == _nextResize) {
             _nextResize++;
-            _map.resize(_map.getSize() * DefaultResizeCoef, INT_MAX);
+            _map.resizeUnconditionally(_map.getSize() * DefaultResizeCoef);
         }
 
         while (!_map.insert(key, item)) {
-            _map.resize(_map.getSize(), 1);
+            _nextResize++;
+            _map.resizeUnconditionally(_map.getSize() * DefaultResizeCoef);
         } // also performs rehashing
     }
 
@@ -479,7 +481,7 @@ private:
     // class fields
     // ------------------------------
 public:
-    static constexpr double DefaultRehashPolicy = 1.0;
+    static constexpr double DefaultRehashPolicy = 2.0;
     static constexpr size_t DefaultDowscaleFactor = 4;
     static constexpr size_t InitMapSize = 8;
 private:

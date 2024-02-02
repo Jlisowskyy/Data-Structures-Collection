@@ -169,6 +169,10 @@ public:
         return false;
     }
 
+    void resizeUnconditionally(const size_t nSize) {
+        while (!_performHashMapTransfer(nSize));
+    }
+
     [[nodiscard]] const KeyT& getLastSearchedKey() const {
         return *_lastSearchedKey;
     }
