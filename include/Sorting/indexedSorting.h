@@ -36,7 +36,7 @@ public:
     // ------------------------------
 
     void _quickSort(const int l, const int r) {
-        const int m = _partition2(l, r);
+        const int m = _partition1(l, r);
         if (m-1 > l) _quickSort(l, m-1);
         if (m+1 < r) _quickSort(m+1, r);
     }

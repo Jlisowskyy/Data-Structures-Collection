@@ -35,6 +35,7 @@
  *  - rewrite rehash method
  *  - implement other bucket types?
  *  - boost hash bucket perofmance further
+ *  - add automatical celling to power2 size in constructor
  */
 
 template <
@@ -354,7 +355,8 @@ public:
 
     _chainHashingMapT(): _chainHashingMapT(InitMapSize) {}
     explicit _chainHashingMapT(const size_t size):
-        _hFunc{size}, _nextRehash{static_cast<size_t>(size * _rehashPolicy)}, _buckets(size) {}
+        _hFunc{size}, _nextUpScaleResize{static_cast<size_t>(size * _rehashPolicy)},
+        _nextDownScaleResize{size / DefaultDowscaleFactor}, _buckets(size) {}
 
     _chainHashingMapT(const _chainHashingMapT&) = default;
     _chainHashingMapT(_chainHashingMapT&&) = default;
@@ -377,7 +379,7 @@ public:
 
         if (!_buckets[hash].insert(key, item)) return false;
 
-        if (++_elemCount > _nextRehash) _resize();
+        if (++_elemCount > _nextUpScaleResize) _resize(_buckets.size() * 2);
         return true;
     }
 
@@ -385,16 +387,20 @@ public:
         return _buckets[_hFunc(key)].search(key);
     }
 
+    // Note: element MUST be contained, otherwise behavior is undefined
     void remove(const KeyT& key) {
-        const size_t hash = _hFunc(key);
+        _buckets[_hFunc(key)].remove(key);
 
-        _buckets[hash].remove(key);
+        if (--_elemCount < _nextDownScaleResize)
+            _resize(_buckets.size() / 2);
     }
 
     bool safeRemove(const KeyT& key) {
-        const size_t hash = _hFunc(key);
+        const bool result = _buckets[_hFunc(key)].safeRemove(key);
 
-        const bool result = _buckets[hash].safeRemove(key);
+        if (result && --_elemCount < _nextDownScaleResize)
+            _resize(_buckets.size() / 2);
+
         return result;
     }
 
@@ -414,19 +420,19 @@ public:
         return _rehashPolicy;
     }
 
-    // TODO: change it LOAD_FACTOR !+ BUCKET_RATIO
-    bool rehash(const float desiredBucketRatio = 1.5, const int maxTries = 3) {
+    // Note: should only be used when preparing structure to be used in future without insertion and deletion
+    bool rehash(const float desiredAverageBucketLoadRatio = 1.5, const int maxTries = 3) {
         int tries = 0;
 
-        while(load_factor() > desiredBucketRatio && tries++ < maxTries) {
+        while(getAverageUsedBucketLoad() > desiredAverageBucketLoadRatio && tries++ < maxTries) {
             _rehash(_buckets.size());
         }
 
-        return load_factor() < desiredBucketRatio;
+        return getAverageUsedBucketLoad() < desiredAverageBucketLoadRatio;
     }
 
     [[nodiscard]] ItemT& get(const KeyT& key) {
-        return _buckets.get(key);
+        return _buckets[_hFunc(key)].get(key);
     }
 
     [[nodiscard]] ItemT& operator[](const KeyT& key) {
@@ -446,14 +452,21 @@ public:
         return max;
     }
 
+    [[nodiscard]] double getAverageUsedBucketLoad() const {
+        double usedBuckets = 0;
+        for (const auto& bucket : _buckets)
+            if (bucket.size() != 0) ++usedBuckets;
+
+        return _elemCount / usedBuckets;
+    }
+
     // ------------------------------
     // class private methods
     // ------------------------------
 
 private:
-    void _resize() {
-        const size_t nSize = _buckets.size() * 2;
-        _nextRehash = static_cast<size_t>(nSize * _rehashPolicy);
+    void _resize(const size_t nSize) {
+        _nextUpScaleResize = static_cast<size_t>(nSize * _rehashPolicy);
         _rehash(nSize);
     }
 
@@ -466,14 +479,16 @@ private:
     // class fields
     // ------------------------------
 public:
-    static constexpr double DefaultRehashPolicy = 2;
+    static constexpr double DefaultRehashPolicy = 1.0;
+    static constexpr size_t DefaultDowscaleFactor = 4;
     static constexpr size_t InitMapSize = 8;
 private:
     HashFuncT _hFunc;
 
     float _rehashPolicy = DefaultRehashPolicy; // number used to deduce _nextRehash barrier
 
-    size_t _nextRehash; // next barrier, which overloading concludes to full rehash
+    size_t _nextUpScaleResize; // next barrier, which overloading concludes to full rehash
+    size_t _nextDownScaleResize;
     size_t _elemCount{}; // actual existing items in container
 
     std::vector<BucketT> _buckets{};

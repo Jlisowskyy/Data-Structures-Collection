@@ -11,8 +11,8 @@
 static constexpr bool displayListHeapSort = false;
 static constexpr bool displayListMergeSort = false;
 static constexpr bool displayListInsertionSort = false;
-static constexpr bool displayListQuickSort = true;
-static constexpr bool displayIndexedQuickSort = false;
+static constexpr bool displayListQuickSort = false;
+static constexpr bool displayIndexedQuickSort = true;
 
 int sortMain() {
     using lNode = ListSortingAlgorithms::listNode<int>;

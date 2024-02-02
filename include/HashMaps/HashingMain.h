@@ -54,7 +54,7 @@ void performHashTest(const size_t attemptCount, const std::vector<size_t>& elems
     std::cout << std::format("Average hashrate: {} insertsPerMs\n", 5 * elems.size() / sum);
 }
 
-template<class hashmap, bool check = false>
+template<class hashmap, bool check = false, bool get = false>
 void performAccessTest(const size_t attemptCount, const std::vector<size_t>& indexes, const std::vector<size_t>& elems) {
     double sum{};
 
@@ -63,7 +63,14 @@ void performAccessTest(const size_t attemptCount, const std::vector<size_t>& ind
         for (const auto elem : elems) map.insert(std::make_pair(elem, elem));
 
         auto t1 = std::chrono::steady_clock::now();
-        for (const auto ind : indexes) ++map[elems[ind]];
+
+        if constexpr (get) {
+            for (const auto ind : indexes) ++map.get(elems[ind]);
+        }
+        if constexpr (!get) {
+            for (const auto ind : indexes) ++map[elems[ind]];
+        }
+
         auto t2 = std::chrono::steady_clock::now();
 
         const double time = (t2.time_since_epoch() - t1.time_since_epoch()).count()*1e-6;
