@@ -10,8 +10,8 @@
 template<
     class KeyT,
     class ItemT,
-    class PredT
->class BTreeT {
+    class PredT = std::greater<KeyT>
+>class BSTTreeT {
     // ------------------------------
     // Class inner types
     // ------------------------------
@@ -23,15 +23,15 @@ template<
     // ------------------------------
 public:
 
-    BTreeT() = default;
+    BSTTreeT() = default;
 
-    BTreeT(const BTreeT& other): _elemCount(other._elemCount) {
+    BSTTreeT(const BSTTreeT& other): _elemCount(other._elemCount) {
         _root = CloneTree(other._root);
     }
 
-    BTreeT(BTreeT&& other) noexcept : _root(other._root), _elemCount(other._elemCount) {}
+    BSTTreeT(BSTTreeT&& other) noexcept : _root(other._root), _elemCount(other._elemCount) {}
 
-    BTreeT& operator=(const BTreeT& other) {
+    BSTTreeT& operator=(const BSTTreeT& other) {
         if (this == &other) return *this;
 
         CleanTree(_root);
@@ -41,7 +41,7 @@ public:
         return *this;
     }
 
-    BTreeT& operator=(BTreeT&& other) noexcept {
+    BSTTreeT& operator=(BSTTreeT&& other) noexcept {
         if (this == &other) return *this;
 
         CleanTree(_root);
@@ -54,7 +54,7 @@ public:
         return *this;
     }
 
-    ~BTreeT() {
+    ~BSTTreeT() {
         CleanTree(_root);
     }
 
@@ -106,17 +106,61 @@ public:
         return true;
     }
 
+    bool contains(const KeyT& key) const {
+        auto n = _searchDP(key);
+        if (!*n) return false;
+        return true;
+    }
+
+    ItemT& safeGet(const KeyT& key) {
+        auto n = _searchDP(key);
+        if (!*n) {
+            *n = new node(ItemT{}, key);
+        }
+
+        return *n;
+    }
+
+    // Note: key must exist inside the tree
+    ItemT& get(const KeyT& key) const {
+        return **_searchDP(key);
+    }
+
+    ItemT& operator[](const KeyT& key) {
+        return safeGet(key);
+    }
+
+    const ItemT& operator[](const KeyT& key) const {
+        return get(key);
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const BSTTreeT& tree) {
+        return PrettyBTreePrinter<node>::PrintWithQueue(out, tree._root);
+    }
+
     // ------------------------------
     // Private class methods
     // ------------------------------
 private:
 
-    node** _searchDP(const KeyT& key) const {
-        node** n = _root;
+    node** _searchDP(const KeyT& key) {
+        node** n = &_root;
 
         while(*n) {
-            if (*n < key) n = &(*n)->right;
-            else if (*n > key) n = &(*n)->left;
+            if (key > **n) n = &(*n)->right;
+            else if (**n > key) n = &(*n)->left;
+            else return n;
+        }
+
+        return n;
+    }
+
+    node* const * _searchDP(const KeyT& key) const {
+        node* const * n = &_root;
+
+        while(*n) {
+            if (key > **n) n = &(*n)->right;
+            else if (**n > key) n = &(*n)->left;
             else return n;
         }
 

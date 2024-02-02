@@ -10,9 +10,9 @@
 static constexpr bool displayBtree = false;
 static constexpr bool displayHanoi = false;
 static constexpr bool displayHeaps = false;
-static constexpr bool displayDictionaryTrees = false;
+static constexpr bool displayDictionaryTrees = true;
 static constexpr bool displaySorting = false;
-static constexpr bool displayHashMaps = true;
+static constexpr bool displayHashMaps = false;
 
 int main()
 {

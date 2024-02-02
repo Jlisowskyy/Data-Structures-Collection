@@ -8,6 +8,9 @@
 #include "../include/DictionaryTrees/binaryTRIALStructures.h"
 #include "../include/DictionaryTrees/BSTTree.h"
 
+#include <chrono>
+#include <random>
+
 void SPLAYTreeMain() {
     // // TODO: Temporarty showcase
     //
@@ -112,5 +115,37 @@ void PATRICIAMain() {
 }
 
 void BSTTreeMain() {
+    static constexpr size_t elemCount = 10;
+    static constexpr size_t maxStep = 5;
+    static constexpr size_t initSeq = 1;
+    static constexpr size_t tries = 3;
+    static constexpr size_t removeActions = 4;
 
+    std::default_random_engine eng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    for (size_t t = 0; t < tries; ++t) {
+        std::cout << "--------------------------------------------------------------------------------------------\n";
+        std::vector<size_t> elems{};
+        BSTTreeT<size_t, size_t> map{};
+
+        size_t elem = initSeq;
+        for (size_t i = 0; i < elemCount; ++i) {
+            elems.push_back(elem);
+            elem += 1 + eng() % maxStep;
+        }
+
+        std::shuffle(elems.begin(), elems.end(), eng);
+
+        std::cout << "Inputs sequence:\n";
+        for(auto e : elems) {
+            std::cout << std::format("{} ", e);
+            map.insert(e,e);
+        }
+        std::cout << "Tree:\n" << map;
+
+        for (size_t i = 0; i < removeActions; ++i) {
+            map.remove(elems[i]);
+            std::cout << std::format("\nTree after removing {}:\n", elems[i]) << map;
+        }
+    }
 }
