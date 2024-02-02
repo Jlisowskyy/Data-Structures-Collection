@@ -31,11 +31,9 @@
  */
 
 /*                  GENRAL TODOS:
- *  - add resizing when load_factor drops below some treshold
- *  - rewrite rehash method
  *  - implement other bucket types?
- *  - boost hash bucket perofmance further
  *  - add automatical celling to power2 size in constructor
+ *  - AVX support?
  */
 
 template <
@@ -418,8 +416,12 @@ public:
         return _buckets.size();
     }
 
-    float& accessRehashPolicy() {
+    [[nodiscard]] float max_load_factor() const {
         return _rehashPolicy;
+    }
+
+    void max_load_factor(float nFactor) {
+        _rehashPolicy = nFactor;
     }
 
     // Note: should only be used when preparing structure to be used in future without insertion and deletion
@@ -481,7 +483,7 @@ private:
     // class fields
     // ------------------------------
 public:
-    static constexpr double DefaultRehashPolicy = 2.0;
+    static constexpr double DefaultRehashPolicy = 1.0;
     static constexpr size_t DefaultDowscaleFactor = 4;
     static constexpr size_t InitMapSize = 8;
 private:

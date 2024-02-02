@@ -7,6 +7,7 @@
 
 #include <random>
 #include <chrono>
+#include <cinttypes>
 
 static constexpr size_t SIZE_ONE = 1;
 static constexpr size_t SIZE_ZERO = 0;
@@ -41,6 +42,60 @@ inline int extractMSB(const size_t x)
 
     return bit;
 }
+
+template<
+    class KeyT,
+    size_t (*HashableAccessor)(const KeyT& item) = [](const KeyT& item) { return static_cast<size_t>(item); }
+>class Fast2PowHashFunction {
+    /*                  Description
+     *  Hash function otpimised to be used with sizes, that are the power of 2.
+     *  Returns only 32-bit values and operates on bigger 64-bit integers.
+     *  Thus this class is not portable at all.
+     *
+     *  Works accordingly to this formula:
+     *      w = integer that size = 2^w
+     *  h(v) = ((ax + b) & (2^(32+w)-1) ) >> 32 = ((ax + b) % 2^(32+w) ) / 2^32
+     *
+     */
+
+    // ------------------------------
+    // Class creation
+    // ------------------------------
+public:
+
+    // IMPORTANT size < 2^32
+    explicit Fast2PowHashFunction(const uint64_t size):
+        _a(randEngine_64()), _b(randEngine_64()), _mask((size << 32) - 1) {}
+
+    // ------------------------------
+    // Class interaction
+    // ------------------------------
+
+    void rollParameters() {
+        _a = randEngine_64();
+        _b = randEngine_64();
+    }
+
+    void changeSize(const size_t nSize) {
+        _mask = (nSize << 32) - 1;
+    }
+
+    size_t operator()(const size_t x) const {
+        return ((_a*x + _b) & _mask) >> 32;
+    }
+
+    // ------------------------------
+    // Class fields
+    // ------------------------------
+private:
+    inline static std::mt19937_64 randEngine_64{
+        static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())
+    };
+
+    uint64_t _a;
+    uint64_t _b;
+    uint64_t _mask;
+};
 
 template<
     class KeyT,

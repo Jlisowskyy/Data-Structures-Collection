@@ -170,7 +170,45 @@ public:
     }
 
     void resizeUnconditionally(const size_t nSize) {
-        while (!_performHashMapTransfer(nSize));
+        bool collisionDetected;
+
+        HashFuncT hashFunc(nSize);
+
+        // prepare containers
+        std::vector<ItemT> nItems(nSize);
+        std::vector<bool> nOccup(nSize);
+        std::vector<KeyT> nKeys(nSize);
+
+        do {
+            collisionDetected = false;
+
+            // copy all existing elements
+            for (size_t i = 0; i < _items.size(); ++i) {
+                if (_occupancyTable[i] == false) continue;
+
+                const size_t hash = hashFunc(_keys[i]);
+
+                // collision detected abort
+                if (nOccup[hash] == true) {
+                    nOccup.assign(nSize, false);
+                    collisionDetected = true;
+                    hashFunc = HashFuncT(nSize);
+                    break;
+                }
+
+                nItems[hash] = _items[i];
+                nOccup[hash] = true;
+                nKeys[hash] = _keys[i];
+            }
+
+        }while(collisionDetected);
+
+
+        _size = nSize;
+        _hFunc = hashFunc;
+        _keys = nKeys;
+        _items = nItems;
+        _occupancyTable = nOccup;
     }
 
     [[nodiscard]] const KeyT& getLastSearchedKey() const {

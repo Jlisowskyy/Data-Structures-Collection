@@ -60,6 +60,7 @@ void performAccessTest(const size_t attemptCount, const std::vector<size_t>& ind
 
     for (size_t i = 0; i < attemptCount; ++i) {
         hashmap map{};
+        map.max_load_factor(1.0);
         for (const auto elem : elems) map.insert(std::make_pair(elem, elem));
 
         auto t1 = std::chrono::steady_clock::now();

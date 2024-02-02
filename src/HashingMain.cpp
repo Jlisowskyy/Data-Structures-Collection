@@ -60,6 +60,14 @@ void ExpandiblePlainMapTest() {
 
 }
 
+using boostedMap = _chainHashingMapT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>,
+        PlainHashBucketT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>>>;
+
+using simpleMap = _chainHashingMapT<size_t, size_t>;
+
+using fastListMap = _chainHashingMapT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>,
+        LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>;
+
 void HashRateTest() {
     static constexpr auto elementCount = static_cast<size_t>(1e+5);
     static constexpr auto accessCount = static_cast<size_t>(1e+8);
@@ -116,11 +124,10 @@ void HashRateTest() {
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with list buckets test:\n";
-    performAccessTest<_chainHashingMapT<size_t, size_t, std::equal_to<size_t>, BaseHashFunction<size_t, true>,
-        LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>, true>(tryPerMap, accessIndexes, elems);
+    performAccessTest<fastListMap, true>(tryPerMap, accessIndexes, elems);
 
     std::cout << "-------------------------------------------------------\n";
     std::cout << "ChainMap with hash buckets test:\n";
-    performAccessTest<_chainHashingMapT<size_t, size_t>, true, true>(tryPerMap, accessIndexes, elems);
+    performAccessTest<boostedMap, true, true>(tryPerMap, accessIndexes, elems);
     std::cout << "-------------------------------------------------------\n";
 }
