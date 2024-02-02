@@ -2,14 +2,16 @@
 // Created by Jlisowskyy on 1/31/24.
 //
 
-#include "../include/HashMaps/HashingMain.h"
-#include "../include/HashMaps/plainHashMap.h"
-
 #include <iostream>
 #include <random>
 #include <chrono>
 #include <unordered_map>
 #include <map>
+
+#include "../include/HashMaps/HashingMain.h"
+#include "../include/HashMaps/plainHashMap.h"
+#include "../include/structureTesters.h"
+#include "../include/HashMaps/chainHashingMap.h"
 
 void PlainMapTest() {
     static constexpr size_t keys[] = {
@@ -60,24 +62,45 @@ void ExpandiblePlainMapTest() {
 
 }
 
-using boostedMap = _chainHashingMapT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>,
-        PlainHashBucketT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>>>;
+using boostedMap = _chainHashingMapT<size_t, size_t, std::equal_to<>, Fast2PowHashFunction<size_t>,
+        PlainHashBucketT<size_t, size_t, std::equal_to<>, Fast2PowHashFunction<size_t>>>;
 
 using simpleMap = _chainHashingMapT<size_t, size_t>;
 
-using fastListMap = _chainHashingMapT<size_t, size_t, std::equal_to<size_t>, Fast2PowHashFunction<size_t>,
-        LinkedListBucketT<size_t, size_t, std::equal_to<size_t>>>;
+using fastListMap = _chainHashingMapT<size_t, size_t, std::equal_to<>, Fast2PowHashFunction<size_t>,
+        LinkedListBucketT<size_t, size_t, std::equal_to<>>>;
 
-void HashRateTest() {
-    static constexpr auto elementCount = static_cast<size_t>(1e+5);
-    static constexpr auto accessCount = static_cast<size_t>(1e+8);
+void HashRateTest(const bool interactive) {
+    static constexpr auto elementCountDef = static_cast<size_t>(1e+5);
+    static constexpr auto accessCountDef = static_cast<size_t>(1e+8);
     static constexpr size_t elementStep = 5;
     static constexpr size_t initElem  = 1;
-    static constexpr size_t tryPerMap = 5;
+    static constexpr size_t tryPerMapDef = 5;
 
     std::vector<size_t> elems{};
     std::vector<size_t> accessIndexes{};
     std::default_random_engine eng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    size_t elementCount{};
+    size_t accessCount{};
+    size_t tryPerMap{};
+
+    if (interactive) {
+        std::cout << "Welcome to the Hash Map Performanc Test!\n"
+        << "Provide your parameteres of the test to begin:\n"
+        << "    1) Element count - defines how many elements will be added to the maps:\n";
+        std::cin >> elementCount;
+        std::cout << "  2) Access count - defines how many accesses per test will be performed:\n";
+        std::cin >> accessCount;
+        std::cout << "  3) Attempt count - how many different attempts per map type will be performed:\n";
+        std::cin >> tryPerMap;
+    }
+
+    elementCount = elementCount > 0 ? elementCount : elementCountDef;
+    accessCount = accessCount > 0 ? accessCount : accessCountDef;
+    tryPerMap = tryPerMap > 0 ? tryPerMap : tryPerMapDef;
+
+
 
     size_t elem = initElem;
     for (size_t i = 0; i < elementCount; ++i) {

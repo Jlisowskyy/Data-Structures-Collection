@@ -67,7 +67,7 @@ void RSTTreeMain() {
 }
 
 void PATRICIAMain() {
-    binaryPATRICIA patricia{
+    const binaryPATRICIA patricia{
         0b1111,
         0b0111,
         0b1010,
@@ -84,3 +84,13 @@ void PATRICIAMain() {
 void BSTTreeMain() {
     BinaryTreeTester<BSTTreeT<size_t, size_t>>(true);
 }
+
+void AVLTreeMain() {
+
+}
+
+void RBTreeMain() {
+
+}
+
+
