@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <bit>
+#include <format>
 
 #include "_AVLcore.h"
 #include "../bTreeHelpers.h"
@@ -43,7 +44,7 @@ template<
         }
 
         friend std::ostream& operator<<(std::ostream& out, const node& n) {
-            return out << n._key;
+            return out << n._key << std::format("({})", n.bl);
         }
 
         ~node() = default;
@@ -120,7 +121,8 @@ public:
     }
 
     bool insert(const KeyT& key, const ItemT& item) {
-        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);
+        // return _nonRecursiveInserter::insert(key, item, _root, _elemCount);
+        return insertRecursive(key, item);
     }
 
     bool insert(const std::pair<KeyT, ItemT>& pair) {
@@ -386,13 +388,25 @@ private:
             return _removedNode;
         }
 
+        static node* extractSmallest(node*& root) {
+            _extractSmallest(root);
+            return _extractedNode;
+        }
+
+        static node* extractBiggest(node*& root) {
+            _extractBiggest(root);
+            return _extractedNode;
+        }
+
     private:
 
         static void _leftRemovalUpdater(node*& root) {
             switch (root->bl) {
                 case rightTilt:
-                    if (root->right->bl == rightTilt) AVLCore::RR(root);
-                    else AVLCore::RL(root);
+                    // if (root->right->bl == rightTilt) AVLCore::RR(root);
+                    // else AVLCore::RL(root);
+                    if (root->right->bl == leftTilt) AVLCore::RL(root);
+                    else AVLCore::RR(root);
                     break;
                 case noTilt:
                     root->bl = rightTilt;
@@ -414,8 +428,10 @@ private:
                     _wasChanged = false;
                     break;
                 case leftTilt:
-                    if (root->left->bl == leftTilt) AVLCore::LL(root);
-                    else AVLCore::LR(root);
+                    // if (root->left->bl == leftTilt) AVLCore::LL(root);
+                    // else AVLCore::LR(root);
+                    if (root->left->bl == rightTilt) AVLCore::LR(root);
+                    else AVLCore::LL(root);
                     break;
             }
         }
@@ -444,42 +460,25 @@ private:
             {
                 _removedNode = root; // copying result
 
-                // // Working through 2 possibilites: node to remove is a leaf or is not
-                // if (root->left) _extractBiggest(root->left);
-                // else if (root->right) _extractSmallest(root->right);
-                // else
-                //     // we are removing leaf
-                // {
-                //     _wasChanged = true; // upward propagation of changed structure information
-                //     root = nullptr;
-                //     return;
-                // }
-                //
-                // _wasChanged = true; // upward propagation of changed structure information
-                //
-                // // replacing old node
-                // _extractedNode->left = root->left;
-                // _extractedNode->right = root->right;
-                // _extractedNode->bl = root->bl;
-                //
-                // root = _extractedNode;
-
                 if (!root->left) {
                     root = root->right;
+                    _wasChanged = true;
                 }
                 else if (!root->right) {
                     root = root->left;
+                    _wasChanged = true;
                 }
                 else {
                     _extractSmallest(root->right);
+
                     _extractedNode->left = root->left;
                     _extractedNode->right = root->right;
                     _extractedNode->bl = root->bl;
-
                     root = _extractedNode;
+
+                    if (_wasChanged) _rightRemovalUpdater(root);
                 }
 
-                _wasChanged = true;
             }
         }
 

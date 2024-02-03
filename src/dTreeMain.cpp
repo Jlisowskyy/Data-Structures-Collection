@@ -88,19 +88,14 @@ void BSTTreeMain() {
 
 void AVLTreeMain() {
     BinaryTreeTester<AVLTree<size_t, size_t>>(true);
-
-    // AVLTree<size_t, size_t> map{};
-    // map.insert(10, 10);
-    // map.insert(11, 11);
-    // map.insert(12, 12);
-    // map.insert(13, 13);
-    //
-    // map.remove(10);
-    // std::cout << map;
 }
 
 void AVLInsertcionComp() {
     performInsertRecursiveVsNonRecu<AVLTree<size_t, size_t>>(true);
+}
+
+void AVLInteractive() {
+    PerformInteractiveTest<AVLTree<size_t, size_t>>();
 }
 
 

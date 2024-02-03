@@ -14,6 +14,7 @@ void PATRICIAMain();
 void BSTTreeMain();
 void AVLTreeMain();
 void AVLInsertcionComp();
+void AVLInteractive();
 void RBTreeMain();
 
 inline int dTreeMain() {
@@ -25,7 +26,8 @@ inline int dTreeMain() {
         << "    5) BST Tree\n"
         << "    6) AVL Tree\n"
         << "    7) AVL insertion types comparison\n"
-        << "    8) Red-Black Tree\n";
+        << "    8) AVL ineractive tree operations\n"
+        << "    9) Red-Black Tree\n";
 
     int choosenOption{};
     std::cin >> choosenOption;
@@ -53,6 +55,9 @@ inline int dTreeMain() {
             AVLInsertcionComp();
             break;
         case 8:
+            AVLInteractive();
+            break;
+        case 9:
             RBTreeMain();
             break;
         default:

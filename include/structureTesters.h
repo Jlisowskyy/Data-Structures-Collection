@@ -214,4 +214,28 @@ void performInsertRecursiveVsNonRecu(const bool interactive = false) {
         << std::format("    Total time spent with recursive insertions: {}\n    Average insertion per ms: {}\n", sumRecu, 2 * attemptsCount * elemCount / sumRecu);
 }
 
+template<class BTreeT>
+void PerformInteractiveTest() {
+    std::cout << "Welcome to interactive binary tree tester!\n"
+        << "Provide some numbers to add them to the structure!\n"
+        << "Positive integeres means that provided number will be added\n"
+        << "In contrast negative ones will means that provided number will be removed\n"
+        << "And finally 0 number exits the program!\n";
+    BTreeT map{};
+    int num{};
+    do {
+        std::cout << "\nWrite some numbers:\n";
+        std::cin >> num;
+
+        if (num > 0) {
+            map.insert(num, num);
+            std::cout << "Tree afer the operation:\n\n" << map;
+        }
+        else if (num < 0) {
+            map.remove(std::abs(num));
+            std::cout << "Tree afer the operation:\n\n" << map;
+        }
+    }while(num != 0);
+}
+
 #endif //STRUCTURETESTERS_H

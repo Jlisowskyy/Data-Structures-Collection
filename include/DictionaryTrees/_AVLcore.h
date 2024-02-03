@@ -14,11 +14,9 @@ template<
     _AVLCore& operator=(const _AVLCore& other) = delete;
 
     enum blStates {
-        balanced = 0,
-        leftSlightTilt = 1,
-        rightSlightTilt = -1,
-        leftTilt = 2,
-        rightTilt = -2,
+        noTilt = 0,
+        leftTilt = 1,
+        rightTilt = -1,
     };
 
     static void RR(nodeT*& root) {
@@ -31,13 +29,13 @@ template<
 
         // if necessary changes bl
         if constexpr (refactorBL) {
-            if (rightSubtree->bl == rightSlightTilt) {
-                rightSubtree->bl = balanced;
-                root->bl = balanced;
+            if (rightSubtree->bl == rightTilt) {
+                rightSubtree->bl = noTilt;
+                root->bl = noTilt;
             }
             else {
-                rightSubtree->bl = leftSlightTilt;
-                root->bl = rightSlightTilt;
+                rightSubtree->bl = leftTilt;
+                root->bl = rightTilt;
             }
         }
 
@@ -54,13 +52,13 @@ template<
         leftSubtree->right = root;
 
         if constexpr (refactorBL) {
-            if (leftSubtree->bl == leftSlightTilt) {
-                root->bl = balanced;
-                leftSubtree->bl = balanced;
+            if (leftSubtree->bl == leftTilt) {
+                root->bl = noTilt;
+                leftSubtree->bl = noTilt;
             }
             else {
-                leftSubtree->bl = rightSlightTilt;
-                root->bl = leftSlightTilt;
+                leftSubtree->bl = rightTilt;
+                root->bl = leftTilt;
             }
         }
 
@@ -81,19 +79,22 @@ template<
         leftRightSubtree->right = root;
 
         if constexpr (refactorBL) {
-            if (leftRightSubtree->bl == balanced) {
-                root->bl = leftSubtree->bl = balanced;
-            }
-            else if (leftRightSubtree->bl == leftSlightTilt) {
-                leftSubtree->bl = balanced;
-                root->bl = rightSlightTilt;
-            }
-            else {
-                leftSubtree->bl = leftSlightTilt;
-                root->bl = balanced;
-            }
-
-            leftRightSubtree->bl = balanced;
+            // if (leftRightSubtree->bl == noTilt) {
+            //     root->bl = leftSubtree->bl = noTilt;
+            // }
+            // else if (leftRightSubtree->bl == leftTilt) {
+            //     leftSubtree->bl = noTilt;
+            //     root->bl = rightTilt;
+            // }
+            // else {
+            //     leftSubtree->bl = leftTilt;
+            //     root->bl = noTilt;
+            // }
+            //
+            // leftRightSubtree->bl = noTilt;
+            root->bl = (leftRightSubtree->bl==1) ? -1 : 0;
+            leftSubtree->bl = (leftRightSubtree->bl==-1) ? 1 : 0;
+            leftRightSubtree->bl = 0;
         }
 
         // saving result
@@ -113,19 +114,23 @@ template<
         rightLeftSubtree->left = root;
 
         if constexpr (refactorBL) {
-            if (rightLeftSubtree->bl == balanced) {
-                root->bl = rightSubtree->bl = balanced;
-            }
-            else if (rightLeftSubtree->bl == rightSlightTilt) {
-                root->bl = leftSlightTilt;
-                rightSubtree->bl = balanced;
-            }
-            else{
-                root->bl = balanced;
-                rightSubtree->bl = rightSlightTilt;
-            }
+            // if (rightLeftSubtree->bl == noTilt) {
+            //     root->bl = rightSubtree->bl = noTilt;
+            // }
+            // else if (rightLeftSubtree->bl == rightTilt) {
+            //     root->bl = leftTilt;
+            //     rightSubtree->bl = noTilt;
+            // }
+            // else{
+            //     root->bl = noTilt;
+            //     rightSubtree->bl = rightTilt;
+            // }
+            //
+            // rightLeftSubtree->bl = noTilt;
 
-            rightLeftSubtree->bl = balanced;
+            root->bl = (rightLeftSubtree->bl==-1) ? 1 : 0;
+            rightSubtree->bl = (rightLeftSubtree->bl==1) ? -1 : 0;
+            rightLeftSubtree->bl = 0;
         }
 
         //saving results
