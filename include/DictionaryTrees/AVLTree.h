@@ -10,6 +10,7 @@
 
 #include "_AVLcore.h"
 #include "../bTreeHelpers.h"
+#include "../simpleStructures.h"
 
 template<
     class KeyT,
@@ -119,16 +120,16 @@ public:
     }
 
     bool insert(const KeyT& key, const ItemT& item) {
-        return _insertNotRecursiveDoublePointers(key, item, _root);
+        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);
     }
 
     bool insert(const std::pair<KeyT, ItemT>& pair) {
         const auto& [key, item] = pair;
-        return _insertNotRecursiveDoublePointers(key, item, _root);;
+        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);;
     }
 
     bool insert(KeyT&& key, ItemT&& item) {
-        return _insertNotRecursiveDoublePointers(key, item, _root);;
+        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);;
     }
 
     bool insert(node* n) {
@@ -209,96 +210,93 @@ private:
         return n;
     }
 
-    template<class StackItemT>
-    struct _simpleStack {
-        explicit _simpleStack(const size_t size): _tab(size) {}
-        ~_simpleStack() = default;
+    struct _nonRecursiveInserter {
+        _nonRecursiveInserter() = delete;
+        ~_nonRecursiveInserter() = delete;
 
-        void push(StackItemT n){
-            _tab[pos++] = n;
-        }
+        static bool insert(const KeyT& key, const ItemT& item, node*& root, const size_t elemCount) {
+            // structures preparing
+            const size_t lg = std::countl_zero(elemCount);
+            const size_t maxSize = 3 * lg / 2;
 
-        StackItemT pop() {
-            return _tab[--pos];
-        }
+            _stackDir.clean();
+            _stackNode.clean();
 
-        [[nodiscard]] size_t size() const {
-            return pos;
+            // TODO: erase insteead resize -> copies old elements additional overhaed
+            if (maxSize > _stackNode.maxSize()) {
+                _stackNode.resize(2 * lg);
+                _stackDir.resize(2 * lg);
+            }
+
+            node** nd = &root;
+            _stackNode.push(nd);
+
+            // tree traversal
+            while(*nd) {
+                if (key > **nd) {
+                    nd = &(*nd)->right;
+                    _stackDir.push(right);
+                }
+                else if (**nd > key) {
+                    nd = &(*nd)->left;
+                    _stackDir.push(left);
+                }
+                else return false;
+
+                _stackNode.push(nd);
+            }
+
+            // attaching new node
+            nd = _stackNode.pop();
+            *nd = new node(key, item);
+
+            // Correcting tree structure
+            while(_stackNode.size()) {
+                nd = _stackNode.pop();
+
+                if (_stackDir.pop() == left)
+                    // Node wass added to the left subtree
+                {
+                    switch ((*nd)->bl) {
+                        case rightTilt:
+                            (*nd)->bl = noTilt;
+                            return true;
+                        case noTilt:
+                            (*nd)->bl = leftTilt;
+                            break;
+                        case leftTilt:
+                            if ((*nd)->left->bl == rightTilt) AVLCore::LR(*nd);
+                            else AVLCore::LL(*nd);
+                            return true;
+                    }
+                }
+                else
+                    // Node was added to the right subtree
+                {
+                    switch ((*nd)->bl) {
+                        case leftTilt:
+                            (*nd)->bl = noTilt;
+                            return true;
+                        case noTilt:
+                            (*nd)->bl = rightTilt;
+                            break;
+                        case rightTilt:
+                            if ((*nd)->right->bl == leftTilt) AVLCore::RL(*nd);
+                            else AVLCore::RR(*nd);
+                            return true;
+                    }
+                }
+            }
+
+            return true;
         }
 
     private:
-        size_t pos{};
-        std::vector<StackItemT> _tab;
+
+        inline static simpleStack<node**> _stackNode{};
+        inline static simpleStack<bool> _stackDir{};
     };
 
-    bool _insertNotRecursiveDoublePointers(const KeyT& key, const ItemT& item, node*& root) {
-        // structures preparing
-        const size_t maxSize = 3 * std::countl_zero(_elemCount) / 2;
-        _simpleStack<node**> stackNode(maxSize);
-        _simpleStack<bool> stackDir(maxSize);
-        node** nd = &root;
-
-        stackNode.push(nd);
-
-        // tree traversal
-        while(*nd) {
-            if (key > **nd) {
-                nd = &(*nd)->right;
-                stackDir.push(right);
-            }
-            else if (**nd > key) {
-                nd = &(*nd)->left;
-                stackDir.push(left);
-            }
-            else return false;
-
-            stackNode.push(nd);
-        }
-
-        // attaching new node
-        nd = stackNode.pop();
-        *nd = new node(key, item);
-
-        // Correcting tree structure
-        while(stackNode.size()) {
-            nd = stackNode.pop();
-
-            if (stackDir.pop() == left)
-                // Node wass added to the left subtree
-            {
-                switch ((*nd)->bl) {
-                    case rightTilt:
-                        (*nd)->bl = noTilt;
-                        return true;
-                    case noTilt:
-                        (*nd)->bl = leftTilt;
-                        break;
-                    case leftTilt:
-                        if ((*nd)->left->bl == rightTilt) AVLCore::LR(*nd);
-                        else AVLCore::LL(*nd);
-                        return true;
-                }
-            }
-            else
-                // Node was added to the right subtree
-            {
-                switch ((*nd)->bl) {
-                    case leftTilt:
-                        (*nd)->bl = noTilt;
-                        return true;
-                    case noTilt:
-                        (*nd)->bl = rightTilt;
-                        break;
-                    case rightTilt:
-                        if ((*nd)->right->bl == leftTilt) AVLCore::RL(*nd);
-                        else AVLCore::RR(*nd);
-                        return true;
-                }
-            }
-        }
-
-        return true;
-    }
 
     struct _inserterRecu {
         _inserterRecu() = delete;

@@ -210,8 +210,8 @@ void performInsertRecursiveVsNonRecu(const bool interactive = false) {
     }
 
     std::cout << "----------------------\nSummary:\n"
-        << std::format("    Total time spent with recursive insertions: {}\n    Average insertion per ms: {}\n", sumRecu, 2 * attemptsCount * elemCount / sumRecu)
-        << std::format("    Total time spent with non recursive insertions: {}\n    Average insertion per ms: {}\n", sumNRecu, 2 * attemptsCount * elemCount / sumNRecu);
+        << std::format("    Total time spent with non recursive insertions: {}\n    Average insertion per ms: {}\n", sumNRecu, 2 * attemptsCount * elemCount / sumNRecu)
+        << std::format("    Total time spent with recursive insertions: {}\n    Average insertion per ms: {}\n", sumRecu, 2 * attemptsCount * elemCount / sumRecu);
 }
 
 #endif //STRUCTURETESTERS_H
