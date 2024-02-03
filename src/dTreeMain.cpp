@@ -90,6 +90,11 @@ void AVLTreeMain() {
     BinaryTreeTester<AVLTree<size_t, size_t>>(true);
 }
 
+void AVLInsertcionComp() {
+    performInsertRecursiveVsNonRecu<AVLTree<size_t, size_t>>(true);
+}
+
+
 void RBTreeMain() {
 
 }

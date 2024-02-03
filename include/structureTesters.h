@@ -19,7 +19,6 @@ void BinaryTreeTester(const bool interactiveMode = false) {
     // defaults
     static constexpr size_t elemCountDef = 10;
     static constexpr size_t triesDef = 3;
-    static constexpr size_t removeActionsDef = 4;
 
     size_t elemCount{};
     size_t removeActions{};
@@ -39,7 +38,6 @@ void BinaryTreeTester(const bool interactiveMode = false) {
     }
 
     elemCount = elemCount > 0 ? elemCount : elemCountDef;
-    removeActions = removeActions > 0 ? removeActions : removeActionsDef;
     tries = tries > 0 ? tries : triesDef;
 
     std::default_random_engine eng(std::chrono::steady_clock::now().time_since_epoch().count());
@@ -129,6 +127,91 @@ void performAccessTest(const size_t attemptCount, const std::vector<size_t>& ind
 
     std::cout << std::format("Average time after {} attempt: {}ms\n", attemptCount, sum/attemptCount);
     std::cout << std::format("Average access: {} accessesPerMs\n", 5 * indexes.size() / sum);
+}
+
+template<class BalancedBSTTreeT>
+void performInsertRecursiveVsNonRecu(const bool interactive = false) {
+    std::default_random_engine eng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    static constexpr size_t attemptsCountDef = 5;
+    static constexpr size_t elemCountDef = static_cast<size_t>(1e+7);
+
+    static constexpr size_t maxStep = 5;
+    static constexpr size_t initSeq = 1;
+
+    size_t attemptsCount{};
+    size_t elemCount{};
+
+    if (interactive) {
+        std::cout << "Welcome to the Balanced BST tree insertion type comparison!\n"
+            << "Provide your parameters to begin the test!\n"
+            << "    1) Attempt count - defines how many attempts per inssertion type will be performed\n";
+        std::cin >> attemptsCount;
+        std::cout << "    2) Elements count - defines how many elements per test will be used\n";
+        std::cin >> elemCount;
+    }
+
+    attemptsCount = attemptsCount > 0 ? attemptsCount : attemptsCountDef;
+    elemCount = elemCount > 0 ? elemCount : elemCountDef;
+
+    double sumRecu{};
+    double sumNRecu{};
+
+    for (size_t i = 0; i < attemptsCount; ++i) {
+        BalancedBSTTreeT map{};
+
+        size_t elem = initSeq;
+        std::vector<size_t> elems(elemCount);
+        for (size_t j = 0; j < elemCount; ++j) {
+            elems[j] = elem;
+            elem += 1 + eng() % maxStep;
+        }
+
+        // insert non recu - sequence
+        auto t1 = std::chrono::steady_clock::now();
+        for (auto e : elems) map.insert(e, e);
+        auto t2 = std::chrono::steady_clock::now();
+
+        // insert recu - sequence
+        map.clean();
+        auto t5 = std::chrono::steady_clock::now();
+        for (auto e : elems) map.insertRecursive(e, e);
+        auto t6 = std::chrono::steady_clock::now();
+
+        std::shuffle(elems.begin(), elems.end(), eng);
+
+        // insert non recu - random data
+        map.clean();
+        auto t3 = std::chrono::steady_clock::now();
+        for (auto e : elems) map.insert(e, e);
+        auto t4 = std::chrono::steady_clock::now();
+
+        // insert recu - random data
+        map.clean();
+        auto t7 = std::chrono::steady_clock::now();
+        for (auto e : elems) map.insertRecursive(e, e);
+        auto t8 = std::chrono::steady_clock::now();
+
+        const double timeSeqNR = (t2.time_since_epoch() - t1.time_since_epoch()).count()*1e-6;
+        const double timeShuffleNR = (t4.time_since_epoch() - t3.time_since_epoch()).count()*1e-6;
+        const double timeSeqR = (t6.time_since_epoch() - t5.time_since_epoch()).count()*1e-6;
+        const double timeShuffleR = (t8.time_since_epoch() - t7.time_since_epoch()).count()*1e-6;
+
+        sumNRecu += timeSeqNR + timeShuffleNR;
+        sumRecu += timeSeqR + timeShuffleR;
+
+        std::cout << std::format("Attempt number {}\n", i)
+            << "    Non recursive result:\n"
+            << std::format("        Time spent on sequenced data: {}ms\n        Insertion per ms ons sequenced data: {}\n", timeSeqNR, elemCount/timeSeqNR)
+            << std::format("        Time spent on shuffled data: {}ms\n        Insertion per ms ons shuffled data: {}\n", timeShuffleNR, elemCount/timeShuffleNR)
+            << "    Recursive result:\n"
+            << std::format("        Time spent on sequenced data: {}ms\n        Insertion per ms ons sequenced data: {}\n", timeSeqR, elemCount/timeSeqR)
+            << std::format("        Time spent on shuffled data: {}ms\n        Insertion per ms ons shuffled data: {}\n", timeShuffleR, elemCount/timeShuffleR);
+    }
+
+    std::cout << "----------------------\nSummary:\n"
+        << std::format("    Total time spent with recursive insertions: {}\n    Average insertion per ms: {}\n", sumRecu, 2 * attemptsCount * elemCount / sumRecu)
+        << std::format("    Total time spent with non recursive insertions: {}\n    Average insertion per ms: {}\n", sumNRecu, 2 * attemptsCount * elemCount / sumNRecu);
 }
 
 #endif //STRUCTURETESTERS_H

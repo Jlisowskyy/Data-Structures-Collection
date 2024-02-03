@@ -13,17 +13,19 @@ void RSTTreeMain();
 void PATRICIAMain();
 void BSTTreeMain();
 void AVLTreeMain();
+void AVLInsertcionComp();
 void RBTreeMain();
 
 inline int dTreeMain() {
     std::cout << "Choose type of the structure to be tested:\n"
-        << "1) Splay Tree\n"
-        << "2) TRIE Tree\n"
-        << "3) RST Tree\n"
-        << "4) PATRICIA Tree\n"
-        << "5) BST Tree\n"
-        << "6) AVL Tree\n"
-        << "7) Red-Black Tree\n";
+        << "    1) Splay Tree\n"
+        << "    2) TRIE Tree\n"
+        << "    3) RST Tree\n"
+        << "    4) PATRICIA Tree\n"
+        << "    5) BST Tree\n"
+        << "    6) AVL Tree\n"
+        << "    7) AVL insertion types comparison\n"
+        << "    8) Red-Black Tree\n";
 
     int choosenOption{};
     std::cin >> choosenOption;
@@ -48,6 +50,9 @@ inline int dTreeMain() {
             AVLTreeMain();
             break;
         case 7:
+            AVLInsertcionComp();
+            break;
+        case 8:
             RBTreeMain();
             break;
         default:
