@@ -125,11 +125,11 @@ public:
 
     bool insert(const std::pair<KeyT, ItemT>& pair) {
         const auto& [key, item] = pair;
-        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);;
+        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);
     }
 
     bool insert(KeyT&& key, ItemT&& item) {
-        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);;
+        return _nonRecursiveInserter::insert(key, item, _root, _elemCount);
     }
 
     bool insert(node* n) {
@@ -137,30 +137,27 @@ public:
     }
 
     bool remove(const KeyT& key) {
-        // node** n = _searchDP(key);
-        // if (!*n) return false;
-        //
-        // _delete(n);
+        node* n = _removerRecu::remove(key, _root);
 
-        return true; // TODO
+        if (!n) return false;
+        delete n;
+        return true;
     }
 
     [[nodiscard]] node* removeAndGetNode(const KeyT& key) {
-        // node** n = _searchDP(key);
-        // if (!*n) return nullptr;
-        //
-        // _delete(n);
-        return nullptr; // TODO
+        node* n = _removerRecu::remove(key, _root);
+        n->left = n->right = nullptr;
+
+        return n;
     }
 
     [[nodiscard]] bool removeAndGet(const KeyT& key, ItemT& out) {
-        // node** n = _searchDP(key);
-        // if (!*n) return false;
-        //
-        // out = std::move((*n)->content.second);
-        // _delete(n);
+        node* n = _removerRecu::remove(key, _root);
 
-        return true; // TODO
+        if (!n) return false;
+        out = std::move(n->_item);
+        delete n;
+        return true;
     }
 
     [[nodiscard]] bool contains(const KeyT& key) const {
@@ -195,6 +192,10 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const AVLTree& tree) {
         return PrettyBTreePrinter<node>::PrintWithQueue(out, tree._root);
     }
+
+    // ------------------------------
+    // Private class methods
+    // ------------------------------
 
 private:
 
@@ -329,16 +330,16 @@ private:
                 if (!_wasChanged) return;
 
                 switch (root->bl) {
-                    case leftTilt:
-                        root->bl = noTilt;
+                    case rightTilt:
+                        if (root->right->bl == leftTilt) AVLCore::RL(root);
+                        else AVLCore::RR(root);
                         _wasChanged = false;
                         break;
                     case noTilt:
                         root->bl = rightTilt;
                         break;
-                    case rightTilt:
-                        if (root->right->bl == leftTilt) AVLCore::RL(root);
-                        else AVLCore::RR(root);
+                    case leftTilt:
+                        root->bl = noTilt;
                         _wasChanged = false;
                         break;
                 }
@@ -376,11 +377,142 @@ private:
         inline static bool _wasChanged{};
     };
 
+    struct _removerRecu {
+        _removerRecu() = delete;
+        ~_removerRecu() = delete;
 
+        static node* remove(const KeyT& key, node*& root) {
+            _remove(key, root);
+            return _removedNode;
+        }
 
-    // ------------------------------
-    // Private class methods
-    // ------------------------------
+    private:
+
+        static void _leftRemovalUpdater(node*& root) {
+            switch (root->bl) {
+                case rightTilt:
+                    if (root->right->bl == rightTilt) AVLCore::RR(root);
+                    else AVLCore::RL(root);
+                    break;
+                case noTilt:
+                    root->bl = rightTilt;
+                    _wasChanged = false;
+                    break;
+                case leftTilt:
+                    root->bl = noTilt;
+                    break;
+            }
+        }
+
+        static void _rightRemovalUpdater(node*& root) {
+            switch (root->bl) {
+                case rightTilt:
+                    root->bl = noTilt;
+                    break;
+                case noTilt:
+                    root->bl = leftTilt;
+                    _wasChanged = false;
+                    break;
+                case leftTilt:
+                    if (root->left->bl == leftTilt) AVLCore::LL(root);
+                    else AVLCore::LR(root);
+                    break;
+            }
+        }
+
+        static void _remove(const KeyT& key, node*& root) {
+            if (!root) {
+                _wasChanged = false;
+                _removedNode = nullptr;
+                return;
+            }
+
+            if (key > *root)
+                // right subtree next target
+            {
+                _remove(key, root->right);
+                if (_wasChanged) _rightRemovalUpdater(root);
+            }
+            else if (*root > key)
+                // left subtree next target
+            {
+                _remove(key, root->left);
+                if (_wasChanged) _leftRemovalUpdater(root);
+            }
+            else
+                // found searched key
+            {
+                _removedNode = root; // copying result
+
+                // // Working through 2 possibilites: node to remove is a leaf or is not
+                // if (root->left) _extractBiggest(root->left);
+                // else if (root->right) _extractSmallest(root->right);
+                // else
+                //     // we are removing leaf
+                // {
+                //     _wasChanged = true; // upward propagation of changed structure information
+                //     root = nullptr;
+                //     return;
+                // }
+                //
+                // _wasChanged = true; // upward propagation of changed structure information
+                //
+                // // replacing old node
+                // _extractedNode->left = root->left;
+                // _extractedNode->right = root->right;
+                // _extractedNode->bl = root->bl;
+                //
+                // root = _extractedNode;
+
+                if (!root->left) {
+                    root = root->right;
+                }
+                else if (!root->right) {
+                    root = root->left;
+                }
+                else {
+                    _extractSmallest(root->right);
+                    _extractedNode->left = root->left;
+                    _extractedNode->right = root->right;
+                    _extractedNode->bl = root->bl;
+
+                    root = _extractedNode;
+                }
+
+                _wasChanged = true;
+            }
+        }
+
+        static void _extractSmallest(node*& root) {
+            if (!root->left) {
+                _extractedNode = root;
+                root = root->right;
+                _extractedNode->right = nullptr;
+                _wasChanged = true;
+                return;
+            }
+
+            _extractSmallest(root->left);
+            if (_wasChanged) _leftRemovalUpdater(root);
+        }
+
+        static void _extractBiggest(node*& root) {
+            if (!root->right) {
+                _extractedNode = root;
+                root = root->left;
+                _extractedNode->left = nullptr;
+                _wasChanged = true;
+                return;
+            }
+
+            _extractBiggest(root->right);
+            if (_wasChanged) _rightRemovalUpdater(root);
+        }
+
+        inline static node* _extractedNode{};
+        inline static bool _wasChanged{};
+        inline static node* _removedNode{};
+    };
 
     // ------------------------------
     // Class fields
