@@ -60,7 +60,7 @@ void BinaryTreeTester(const bool interactiveMode = false) {
             std::cout << std::format("{} ", e);
             map.insert(e,e);
         }
-        std::cout << "Tree:\n" << map;
+        std::cout << "\nTree:\n" << map;
 
         for (size_t i = 0; i < removeActions; ++i) {
             map.remove(elems[i]);

@@ -79,22 +79,22 @@ template<
         leftRightSubtree->right = root;
 
         if constexpr (refactorBL) {
-            // if (leftRightSubtree->bl == noTilt) {
-            //     root->bl = leftSubtree->bl = noTilt;
-            // }
-            // else if (leftRightSubtree->bl == leftTilt) {
-            //     leftSubtree->bl = noTilt;
-            //     root->bl = rightTilt;
-            // }
-            // else {
-            //     leftSubtree->bl = leftTilt;
-            //     root->bl = noTilt;
-            // }
-            //
-            // leftRightSubtree->bl = noTilt;
-            root->bl = (leftRightSubtree->bl==1) ? -1 : 0;
-            leftSubtree->bl = (leftRightSubtree->bl==-1) ? 1 : 0;
-            leftRightSubtree->bl = 0;
+            if (leftRightSubtree->bl == noTilt) {
+                root->bl = leftSubtree->bl = noTilt;
+            }
+            else if (leftRightSubtree->bl == leftTilt) {
+                leftSubtree->bl = noTilt;
+                root->bl = rightTilt;
+            }
+            else {
+                leftSubtree->bl = leftTilt;
+                root->bl = noTilt;
+            }
+
+            leftRightSubtree->bl = noTilt;
+            // root->bl = (leftRightSubtree->bl==1) ? -1 : 0;
+            // leftSubtree->bl = (leftRightSubtree->bl==-1) ? 1 : 0;
+            // leftRightSubtree->bl = 0;
         }
 
         // saving result
@@ -114,23 +114,23 @@ template<
         rightLeftSubtree->left = root;
 
         if constexpr (refactorBL) {
-            // if (rightLeftSubtree->bl == noTilt) {
-            //     root->bl = rightSubtree->bl = noTilt;
-            // }
-            // else if (rightLeftSubtree->bl == rightTilt) {
-            //     root->bl = leftTilt;
-            //     rightSubtree->bl = noTilt;
-            // }
-            // else{
-            //     root->bl = noTilt;
-            //     rightSubtree->bl = rightTilt;
-            // }
-            //
-            // rightLeftSubtree->bl = noTilt;
+            if (rightLeftSubtree->bl == noTilt) {
+                root->bl = rightSubtree->bl = noTilt;
+            }
+            else if (rightLeftSubtree->bl == rightTilt) {
+                root->bl = leftTilt;
+                rightSubtree->bl = noTilt;
+            }
+            else{
+                root->bl = noTilt;
+                rightSubtree->bl = rightTilt;
+            }
 
-            root->bl = (rightLeftSubtree->bl==-1) ? 1 : 0;
-            rightSubtree->bl = (rightLeftSubtree->bl==1) ? -1 : 0;
-            rightLeftSubtree->bl = 0;
+            rightLeftSubtree->bl = noTilt;
+
+            // root->bl = (rightLeftSubtree->bl==-1) ? 1 : 0;
+            // rightSubtree->bl = (rightLeftSubtree->bl==1) ? -1 : 0;
+            // rightLeftSubtree->bl = 0;
         }
 
         //saving results

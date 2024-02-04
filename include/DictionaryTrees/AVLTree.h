@@ -44,7 +44,7 @@ template<
         }
 
         friend std::ostream& operator<<(std::ostream& out, const node& n) {
-            return out << n._key << std::format("({})", n.bl);
+            return out << n._key;
         }
 
         ~node() = default;
@@ -389,12 +389,14 @@ private:
         }
 
         static node* extractSmallest(node*& root) {
-            _extractSmallest(root);
+            _extractSmallest(root->right);
+            if (_wasChanged) _rightRemovalUpdater(root);
             return _extractedNode;
         }
 
         static node* extractBiggest(node*& root) {
             _extractBiggest(root);
+            if (_wasChanged) _leftRemovalUpdater(root);
             return _extractedNode;
         }
 
@@ -403,10 +405,12 @@ private:
         static void _leftRemovalUpdater(node*& root) {
             switch (root->bl) {
                 case rightTilt:
-                    // if (root->right->bl == rightTilt) AVLCore::RR(root);
-                    // else AVLCore::RL(root);
                     if (root->right->bl == leftTilt) AVLCore::RL(root);
-                    else AVLCore::RR(root);
+                    else if (root->right->bl == rightTilt) AVLCore::RR(root);
+                    else {
+                        AVLCore::RR(root);
+                        _wasChanged = false;
+                    }
                     break;
                 case noTilt:
                     root->bl = rightTilt;
@@ -428,10 +432,12 @@ private:
                     _wasChanged = false;
                     break;
                 case leftTilt:
-                    // if (root->left->bl == leftTilt) AVLCore::LL(root);
-                    // else AVLCore::LR(root);
                     if (root->left->bl == rightTilt) AVLCore::LR(root);
-                    else AVLCore::LL(root);
+                    else if (root->left->bl == leftTilt) AVLCore::LL(root);
+                    else {
+                        AVLCore::LL(root);
+                        _wasChanged = false;
+                    }
                     break;
             }
         }
