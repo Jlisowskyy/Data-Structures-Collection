@@ -1,5 +1,4 @@
 *.out
 *.exe
 build/
-CMakeLists.txt
 .idea/
