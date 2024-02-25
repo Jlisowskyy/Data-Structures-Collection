@@ -5,9 +5,11 @@
 #ifndef MINI_PROJECTS_BEAP_H
 #define MINI_PROJECTS_BEAP_H
 
-#include <cstdlib>
+#include <iomanip>
 #include <tuple>
 #include <cmath>
+#include <sstream>
+#include <iostream>
 
 // TODO: temporary
 #define DEBUG_

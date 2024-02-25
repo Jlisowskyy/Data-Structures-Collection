@@ -7,6 +7,8 @@
 
 #include <cstring>
 #include <cmath>
+#include <exception>
+#include <stdexcept>
 
 /*              TODOS:
  *  - rethink all operator[] methods
